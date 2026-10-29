@@ -97,7 +97,7 @@ def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=
             "total_steps":steps,"windows":nwindows,
             "occupation_rmse":float(np.sqrt(np.mean((estimated-truth)**2))),
             "terminal_occupation_abs_error":float(abs(estimated[-1]-exact_n[-1])),
-            "max_wave_norm_drift":float(max(abs(np.abs(wave).square().sum(1)-1))),
+            "max_wave_norm_drift":float(max(abs(np.sum(np.abs(wave)**2,axis=1)-1))),
             "runtime_seconds":elapsed}
 
 def run(out,steps=1200):
