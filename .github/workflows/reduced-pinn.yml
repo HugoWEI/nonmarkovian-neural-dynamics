@@ -5,6 +5,7 @@ on:
     paths:
       - "scripts/reduced_fermionic_pinn.py"
       - "tests/test_reduced_pinn_physics.py"
+      - "tests/test_reduced_pinn_smoke.py"
       - ".github/workflows/reduced-pinn.yml"
   workflow_dispatch:
 
@@ -29,7 +30,7 @@ jobs:
           python -m pip install -e '.[dev]'
           python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
       - name: Validate discrete fermionic benchmark
-        run: python -m pytest -q tests/test_reduced_pinn_physics.py
+        run: python -m pytest -q tests/test_reduced_pinn_physics.py tests/test_reduced_pinn_smoke.py
       - name: Compare uniform, projected, and integrated objectives across 3 seeds x 2 temperatures
         run: python scripts/reduced_fermionic_pinn.py --steps 1200
       - name: Publish measured accuracy and runtime
