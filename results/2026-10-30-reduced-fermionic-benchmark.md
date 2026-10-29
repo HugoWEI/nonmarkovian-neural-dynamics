@@ -40,9 +40,9 @@ At depth 4, increasing Padé order improves independent-reference agreement:
 
 **Conclusion:** For this reduced benchmark, high hierarchy depth is not needed for the tested dot occupation, while Padé order matters much more at low temperature. Agreement approaches the independently observed spectral-cutoff sensitivity. This provides a credible **small-system physical validation bed** for neural methods, but we have not shown a neural advantage over accurate direct simulation.
 
-## Exploratory piecewise neural experiment: LOCAL runs only
+## Exploratory piecewise neural experiment: verified GitHub Actions run
 
-We also implemented a **different, small 20-mode finite-bath neural PINN** with exact quadratic dynamics and four sequential time windows. Losses compare (a) ordinary physics residual, (b) a pointwise adjoint projection, and (c) an integrated adjoint residual. Three seeds at each of the same two temperatures and 1200 optimization steps total were tested locally. These are **not continuum-extrapolated neural simulations**, and they have not yet been independently verified in GitHub Actions.
+We also implemented a **different, small 20-mode finite-bath neural PINN** with exact quadratic dynamics and four sequential time windows. Losses compare (a) ordinary physics residual, (b) a pointwise adjoint projection, and (c) an integrated adjoint residual. Three seeds at each of the same two temperatures and 1200 optimization steps total were tested locally. These are **not continuum-extrapolated neural simulations**. The complete 18-run experiment **passed and was independently verified from the GitHub Actions logs**: https://github.com/HugoWEI/nonmarkovian-neural-dynamics/actions/runs/40976537432 (three modes, three seeds, two temperatures).
 
 Mean across three seeds:
 
@@ -57,12 +57,12 @@ Mean across three seeds:
 
 **Caution:** The proposed adjoint losses lower *average trajectory RMSE* in these settings but **increase terminal occupation error**, which is their nominal target. There is no demonstrated meaningful gain in total computational cost; the direct quadratic solver is far cheaper. Moreover, the usual adjoint formula is a linearization of the quadratic observable, and replacing its exact sensitivity with the network's current prediction can introduce errors.
 
-The first hosted neural run failed because of a NumPy metric typo; the typo was fixed and a smoke test added. This report does not claim its remote success.
+The first hosted neural run failed because of a NumPy metric typo; the typo was corrected. The subsequent run #2 passed, produced all 18 benchmark outputs, and saved its artifact. No new scientific advantage is established by a green workflow.
 
 ## Research decision
 
 Keep the reduced model as a **verification suite and architecture test bed**, not a paper by itself. Next:
-1. Confirm the hosted neural run and compare identical seeds/hardware/cost.
+1. The hosted neural run is verified; now compare **matched actual total cost**, including reference generation and dual-sensitivity computation, against stronger direct and neural baselines.
 2. Test whether a correctly constructed **nonlinear terminal population adjoint** and full-horizon sensitivity allocation can improve the actual targeted occupation while retaining physical norm.
 3. Compare to direct numerical solvers and time-domain PINN with matched total cost.
 4. Pursue the original strongly non-Markovian SIAM only after sourcing or constructing a reliable correlated ADO initial state and converged long-time reference.
