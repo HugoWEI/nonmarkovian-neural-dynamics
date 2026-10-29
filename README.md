@@ -78,6 +78,22 @@ Cloud jobs are now fully inspectable via the connected GitHub interface: both ex
 
 We have **not** reproduced the original correlated DQME initial state or demonstrated a novel neural solver. Before training a model, we need a deeper/converged reference or a reduced physical system allowing an exact independent benchmark. High low-T HEOM depth is computationally expensive (679,121 ADOs at depth 4 for source Nk=7).
 
+## Phase 2 — Reduced spinless fermionic benchmark, cross-validated (2026-10-30)
+
+We now have an independent *quadratic fermion* physical reference and a one-bath QuTiP HEOM implementation for a spinless resonant-level model; the physical parameters and thermal bath are matched across both methods.
+
+- [Full results and important limitations](results/2026-10-30-reduced-fermionic-benchmark.md)
+- [Quadratic exact reference](src/nonmarkovian_neural_dynamics/exact_rlm.py)
+- [Source-type HEOM depth sweep](scripts/spinless_rlm_heom.py) — [cloud workflow](.github/workflows/reduced-rlm-heom.yml)
+- [Higher-order Padé comparison](scripts/spinless_pade_refinement.py) — [cloud workflow](.github/workflows/reduced-rlm-pade.yml)
+- [Small finite-bath piecewise neural PINN ablation](scripts/reduced_fermionic_pinn.py) — [cloud workflow](.github/workflows/reduced-pinn.yml)
+
+**Verified numerical result:** over 6 ps, low-temperature HEOM depth-5 at source-type Nk=7 differs from the independent exact spinless result by at most 1.93e-4; increasing Nk to 13 at depth 4 reduces this to 5.87e-6, close to spectral cutoff sensitivity. High T likewise improves to ~6e-6 at higher Padé order. The spinless reduced model avoids the large long-time hierarchy error found for our earlier interacting spinful model.
+
+**Neural caution:** Early local goal-oriented adjoint objectives improve mean full-trajectory RMSE but worsen the terminal occupation they are meant to target; no new neural method has yet proven superior. The neural baseline's GitHub execution status must be checked separately.
+
+**This is not a reproduction of the authors' correlated interacting SIAM DQME model.**
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
