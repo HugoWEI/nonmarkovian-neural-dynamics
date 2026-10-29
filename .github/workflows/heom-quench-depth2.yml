@@ -1,0 +1,68 @@
+name: HEOM correlated quench depth-2 physicality (CPU)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/heom_correlated_quench.py"
+      - ".github/workflows/heom-quench-depth2.yml"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  physicality:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ratio: "3.0"
+            nk: 3
+            depth: 2
+            label: high-nk3-d2
+          - ratio: "0.3"
+            nk: 3
+            depth: 1
+            label: low-nk3-d1
+          - ratio: "0.3"
+            nk: 3
+            depth: 2
+            label: low-nk3-d2
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Reproduce full correlated steady state and quench
+        run: |
+          python scripts/heom_correlated_quench.py --ratio ${{ matrix.ratio }} \
+            --nk ${{ matrix.nk }} --depth ${{ matrix.depth }} \
+            --output outputs/quench_depth2/${{ matrix.label }}
+      - name: Show physicality and stationarity diagnostics
+        if: success()
+        run: cat outputs/quench_depth2/${{ matrix.label }}/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: quench-${{ matrix.label }}
+          path: outputs/quench_depth2/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Expose run ID
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 3 --body "Quench depth2 ${{ matrix.label }}: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; job result **${RESULT}**; commit \`${GITHUB_SHA}\`."
