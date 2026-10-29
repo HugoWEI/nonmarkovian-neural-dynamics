@@ -19,6 +19,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 jobs:
   bath-audit:
@@ -64,6 +65,16 @@ jobs:
           retention-days: 30
           if-no-files-found: warn
 
+      - name: Publish bath-audit run ID for connected review
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 3 --body "GitHub Actions bath-audit: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; job result **${RESULT}**; commit \`${GITHUB_SHA}\`. (Automated status note; see Actions logs for scientific results.)"
+
   heom:
     runs-on: ubuntu-latest
     timeout-minutes: 35
@@ -99,3 +110,13 @@ jobs:
             outputs/quutip_correlation_match/
           retention-days: 30
           if-no-files-found: warn
+
+      - name: Publish heom run ID for connected review
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 3 --body "GitHub Actions heom: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; job result **${RESULT}**; commit \`${GITHUB_SHA}\`. (Automated status note; see Actions logs for scientific results.)"
