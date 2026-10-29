@@ -22,7 +22,7 @@ else:
     from fermionic_heom_reference import system, HBAR_MEV_PS
 
 
-def make_solver(ratio: float, nk: int, depth: int, rtol=1e-8, atol=1e-10):
+def make_solver(ratio: float, nk: int, depth: int, rtol=1e-8, atol=1e-10, mu_right_mev=0.05):
     from qutip.solver.heom import HEOMSolver, LorentzianPadeBath
     h, up, down, nup, ndown = system()
     opts = {
@@ -36,7 +36,7 @@ def make_solver(ratio: float, nk: int, depth: int, rtol=1e-8, atol=1e-10):
             tag=f"{spin}_{lead}"
         )
         for spin, op in (("up",up),("down",down))
-        for lead, mu in (("L",0.0),("R",0.05))
+        for lead, mu in (("L",0.0),("R",mu_right_mev))
     ]
     solver = HEOMSolver(h, baths, max_depth=depth, options=opts)
     return solver, nup, ndown
