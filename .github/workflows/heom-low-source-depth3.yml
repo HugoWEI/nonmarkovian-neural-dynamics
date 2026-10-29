@@ -1,0 +1,51 @@
+name: Source low-T Nk7 HEOM hierarchy depth 3 (controlled)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/heom-low-source-depth3.yml"
+      - "scripts/heom_single_depth.py"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  source-low-depth3:
+    runs-on: ubuntu-latest
+    timeout-minutes: 7
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Evaluate 43,745-ADO source-matched low-temperature hierarchy
+        run: |
+          timeout --signal=TERM --kill-after=15s 180s python scripts/heom_single_depth.py \
+            --ratio 0.3 --nk 7 --depth 3 --output outputs/source_low_depth3
+      - name: Summary
+        if: success()
+        run: cat outputs/source_low_depth3/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: low-source-nk7-depth3
+          path: outputs/source_low_depth3/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Post run ID and outcome to tracking issue
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 3 --body "Source low depth3: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; job result **${RESULT}**; commit \`${GITHUB_SHA}\`."
