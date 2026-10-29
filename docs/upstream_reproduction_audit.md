@@ -30,3 +30,14 @@ We instead implemented a **separate zero-temperature Lorentzian-reservoir qubit/
 3. Reconstruct from published model initial conditions or reconstruct missing checkpoints; use the **same** Hamiltonian, bath decomposition, truncations, temperature, and physical observable as the published PINN.
 4. Verify convergence against independent HEOM and report numerical tolerance/error budget, not only visual trajectory agreement.
 5. Measure wall-clock and training cost before proposing physics-guided modifications.
+
+
+## Newly verified physical parameters and an honest intermediate reference
+
+The authors' `examples/case1_T=0.3/input_h`, `examples/case1_T=3.0/input_h`, and `examples/pinn_case1_T=3.0/input_h` all specify **spin-orbital energies -0.5, -0.5 and Hubbard interaction U=1**. Our new finite-bath interacting Anderson test uses those **local impurity parameters**, so it matches the published local Hamiltonian. However, it substitutes explicit, finite discrete bath levels (energies -0.7, and optionally +0.85) and couplings selected by us. These do not reproduce the published bath correlation expansion, infinite-reservoir limit, temperature-dependent correlation kernel, or dissipaton equation.
+
+See [finite-bath PINN results](../results/2026-10-29-finite-anderson-reference.md) and [four-seed time-window comparison](../results/2026-10-29-anderson-four-seeds.md).
+
+The PINN tutorial and T=3.0 script both require pre-existing trained checkpoints. The exact upstream path `examples/pinn_case1_T=3.0/rho_BFGS_ll_tr_4.5_0.1` was checked and was absent (404). A low-temperature T=0.3 data/TDVP example alone is **not** an end-to-end PINN-DQME reproduction.
+
+Important: temperature changes *the initial thermal mixture* in our finite-bath model but not its Hamiltonian. Thus temperature trends found here do not test a continuum thermal reservoir's increasing temporal correlations.
