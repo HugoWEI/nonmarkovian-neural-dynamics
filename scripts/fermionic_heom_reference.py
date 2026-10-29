@@ -28,10 +28,11 @@ def compute(temperature_ratio, depth, *, nk=1, t_end=1.5, n_times=31):
     from qutip import tensor, basis
     from qutip.solver.heom import HEOMSolver, LorentzianPadeBath
     h, up, down, nup, ndown = system()
-    # Gamma=0.1 meV for the T/Gamma labels; provisional single-lead spectral
-    # normalization 0.05 meV per lead. Not validated against upstream eta_k.
+    # Gamma=0.1 meV, W=5 meV reproduce upstream zero-mu Padé coefficients
+    # (see independent source match). Chemical-potential phase and QuTiP's
+    # bath conventions must still be checked before claiming full equivalence.
     cutoff = 5.0 / HBAR_MEV_PS
-    coupling = 0.05 / HBAR_MEV_PS
+    coupling = 0.1 / HBAR_MEV_PS
     temperature = temperature_ratio * 0.1 / HBAR_MEV_PS
     baths = [
         LorentzianPadeBath(op, coupling, cutoff, mu / HBAR_MEV_PS,
@@ -84,7 +85,7 @@ def run(out_dir="outputs/fermionic_heom", depths=(1, 2), nk=1):
         "# Intermediate fermionic HEOM experiment", "",
         "**Not the paper's exact bath fit or a converged HEOM reference.**",
         "QuTiP, spinful U=1 meV Anderson impurity, two Lorentzian leads per spin.",
-        "Using provisional Gamma_lead=0.05 meV, W=5 meV, mu=(0,0.05) meV.",
+        "Using source-verified Padé Gamma_lead=0.1 meV, W=5 meV; mu=(0,0.05) meV, with lead-phase conventions still to validate.",
         f"Padé Nk={nk}; hierarchy depth sweep: {list(depths)}.", "",
         "| T/Gamma | depth | terminal n_up | terminal n_down |",
         "|---:|---:|---:|---:|"
