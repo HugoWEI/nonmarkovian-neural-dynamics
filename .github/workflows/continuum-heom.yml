@@ -7,9 +7,12 @@ on:
       - "scripts/upstream_bath_audit.py"
       - "scripts/pade_source_match.py"
       - "scripts/fermionic_heom_reference.py"
+      - "scripts/verify_quutip_correlations.py"
+      - "scripts/upstream_initial_state_audit.py"
       - "tests/test_published_bath.py"
       - "tests/test_pade_match.py"
       - "tests/test_fermionic_heom_reference.py"
+      - "tests/test_upstream_initial_state.py"
       - ".github/workflows/continuum-heom.yml"
 
 permissions:
@@ -26,19 +29,22 @@ jobs:
           python-version: "3.11"
       - name: Install CPU numerical dependencies
         run: python -m pip install -e '.[dev]'
-      - name: Test parser
-        run: python -m pytest -q tests/test_published_bath.py
+      - name: Test published input parsers
+        run: python -m pytest -q tests/test_published_bath.py tests/test_upstream_initial_state.py
       - name: Verify exact Padé coefficients locally
         run: python -m pytest -q tests/test_pade_match.py
       - name: Analyze pinned original bath data
         run: python scripts/upstream_bath_audit.py
       - name: Reconstruct exact-source Lorentzian Padé coefficients
         run: python scripts/pade_source_match.py
+      - name: Inspect original reduced-state populations
+        run: python scripts/upstream_initial_state_audit.py
       - name: Show source-based summary
         if: success()
         run: |
           cat outputs/upstream_bath/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
           cat outputs/pade_source_match/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+          cat outputs/upstream_initial_state/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -46,6 +52,7 @@ jobs:
           path: |
             outputs/upstream_bath/
             outputs/pade_source_match/
+            outputs/upstream_initial_state/
           retention-days: 30
           if-no-files-found: warn
 
@@ -66,15 +73,21 @@ jobs:
           python -m pip install 'qutip>=5.2,<6'
       - name: Test Jordan-Wigner physical operators
         run: python -m pytest -q tests/test_fermionic_heom_reference.py
+      - name: Check the complete fermionic bath correlation C+ and C- against source
+        run: python scripts/verify_quutip_correlations.py
       - name: Run short-time fermionic HEOM at two temperatures and depths
         run: python scripts/fermionic_heom_reference.py
       - name: Report hierarchy diagnostic
         if: success()
-        run: cat outputs/fermionic_heom/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          cat outputs/quutip_correlation_match/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+          cat outputs/fermionic_heom/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: fermionic-heom-intermediate
-          path: outputs/fermionic_heom/
+          path: |
+            outputs/fermionic_heom/
+            outputs/quutip_correlation_match/
           retention-days: 30
           if-no-files-found: warn
