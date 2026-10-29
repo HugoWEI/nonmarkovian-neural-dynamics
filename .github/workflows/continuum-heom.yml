@@ -8,6 +8,8 @@ on:
       - "scripts/pade_source_match.py"
       - "scripts/fermionic_heom_reference.py"
       - "scripts/verify_quutip_correlations.py"
+      - "scripts/upstream_phase_check.py"
+      - "scripts/heom_resource_envelope.py"
       - "scripts/upstream_initial_state_audit.py"
       - "tests/test_published_bath.py"
       - "tests/test_pade_match.py"
@@ -33,6 +35,10 @@ jobs:
         run: python -m pytest -q tests/test_published_bath.py tests/test_upstream_initial_state.py
       - name: Verify exact Padé coefficients locally
         run: python -m pytest -q tests/test_pade_match.py
+      - name: Verify sign-dependent lead chemical-potential phases
+        run: python scripts/upstream_phase_check.py
+      - name: Estimate hierarchy sizes before allocating solver
+        run: python scripts/heom_resource_envelope.py
       - name: Analyze pinned original bath data
         run: python scripts/upstream_bath_audit.py
       - name: Reconstruct exact-source Lorentzian Padé coefficients
@@ -45,6 +51,7 @@ jobs:
           cat outputs/upstream_bath/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
           cat outputs/pade_source_match/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
           cat outputs/upstream_initial_state/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+          cat outputs/heom_resource_envelope/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -53,6 +60,7 @@ jobs:
             outputs/upstream_bath/
             outputs/pade_source_match/
             outputs/upstream_initial_state/
+            outputs/heom_resource_envelope/
           retention-days: 30
           if-no-files-found: warn
 
