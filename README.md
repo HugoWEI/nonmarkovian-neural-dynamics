@@ -42,6 +42,19 @@ In a single-seed test using 3000 optimization steps, the T=0.3 global model has 
 
 The outstanding task is still to reproduce the **published low-temperature fermionic PINN-DQME error** against a converged HEOM solution. See [missing-checkpoint blocker](../../issues/2).
 
+## Phase 1B — Original continuum bath recovered (2026-10-29)
+
+**Reproducible result:** We independently reconstructed the published Lorentzian-Padé bath coefficients for `T/Gamma=3.0` and `T/Gamma=0.3` from the physical parameters `Gamma=0.1 meV`, `W=5 meV`, `hbar=0.658211928 meV ps`. The slowest fitted decay times differ by a factor of 10. Coefficients match the pinned original files to numerical precision.
+
+- [Padé derivation, checks, and source-matching results](results/2026-10-29-pade-source-match.md)
+- [Source coefficient audit](results/2026-10-29-source-bath-check.md)
+- [QuTiP continuum-bath HEOM code](scripts/fermionic_heom_reference.py)
+- [Exact reproduction/convergence requirements](docs/continuum_heom_protocol.md)
+- [CPU remote jobs](.github/workflows/continuum-heom.yml)
+- [Open convergence task](../../issues/3)
+
+**Limitations:** The current HEOM implementation is a source-anchored *intermediate* model. Full equivalence of chemical-potential phases, hierarchy construction, and Padé/HEOM convergence has not been verified; the upstream PINN tutorial still requires a missing checkpoint. No novel neural-solver performance has been demonstrated.
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
