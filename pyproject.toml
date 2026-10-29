@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nonmarkovian-neural-dynamics"
+version = "0.1.0"
+description = "Reproducible research on error-aware neural solvers for non-Markovian quantum dynamics"
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26", "scipy>=1.11"]
+
+[project.optional-dependencies]
+research = ["torch>=2.4", "matplotlib>=3.8", "qutip>=5.2"]
+dev = ["pytest>=8"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
