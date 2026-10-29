@@ -10,7 +10,7 @@ import numpy as np
 from scipy.integrate import simpson
 
 from nonmarkovian_neural_dynamics.toy import (
-    adjoint_weights, check_adjoint_identity, terminal_observable
+    adjoint_weights, check_adjoint_identity, exact_state
 )
 
 
@@ -24,7 +24,7 @@ def sweep(output_dir: Path, *, t_end: float = 4.0, g: float = 1.0) -> list[dict]
         identity = check_adjoint_identity(g=g, lam=lam, t_end=t_end)
         rows.append({
             "lambda": lam,
-            "final_amplitude": terminal_observable(t_end, g, lam),
+            "final_amplitude": float(exact_state(t_end, g, lam)[0]),
             "sensitivity_L1": float(simpson(sensitivity, x=grid)),
             "max_sensitivity": float(sensitivity.max()),
             "identity_error": identity["absolute_identity_error"],
