@@ -63,6 +63,11 @@ def run(ratio, nk, depth, output, t_end=1.5, n_times=31):
         "steady_density":diagnostics([steady_rho]),
         "quench_density":diagnostics(quench.states),
         "equilibrium_density":diagnostics(stay.states),
+        "density_positive_to_1e-8":diagnostics(quench.states)["minimum_eigenvalue"] >= -1e-8,
+        "scientific_status":(
+            "physicality_warning" if diagnostics(quench.states)["minimum_eigenvalue"] < -1e-8
+            else "physicality_passed_not_convergence_certified"
+        ),
     }
     with (out/"trajectories.csv").open("w",newline="") as f:
         writer=csv.writer(f)
@@ -82,6 +87,7 @@ def run(ratio, nk, depth, output, t_end=1.5, n_times=31):
         if isinstance(val,(int,float)) and key!="T_over_Gamma":
             lines.append(f"| {key} | {val:.7g} |")
     lines += ["", f"Quench density diagnostics: {report['quench_density']}",
+              f"**Scientific status: {report['scientific_status']}**",
               "", "Stationarity and physicality checks do not establish",
               "convergence across Padé order or hierarchy depth.",
               "Current measurements require first-tier ADO observables and are not yet included."]
