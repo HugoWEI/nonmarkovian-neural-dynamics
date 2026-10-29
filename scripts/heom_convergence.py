@@ -16,8 +16,10 @@ from pathlib import Path
 import numpy as np
 from scipy.special import comb
 
-from nonmarkovian_neural_dynamics.finite_anderson import number_operator
-from fermionic_heom_reference import system, HBAR_MEV_PS
+if __package__:
+    from .fermionic_heom_reference import system, HBAR_MEV_PS
+else:
+    from fermionic_heom_reference import system, HBAR_MEV_PS
 
 
 def make_solver(ratio: float, nk: int, depth: int, rtol=1e-8, atol=1e-10):
