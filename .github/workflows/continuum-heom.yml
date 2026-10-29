@@ -1,0 +1,70 @@
+name: Published bath audit and intermediate fermionic HEOM
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/upstream_bath_audit.py"
+      - "scripts/fermionic_heom_reference.py"
+      - "tests/test_published_bath.py"
+      - "tests/test_fermionic_heom_reference.py"
+      - ".github/workflows/continuum-heom.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  bath-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU numerical dependencies
+        run: python -m pip install -e '.[dev]'
+      - name: Test parser
+        run: python -m pytest -q tests/test_published_bath.py
+      - name: Analyze pinned original bath data
+        run: python scripts/upstream_bath_audit.py
+      - name: Show source-based summary
+        if: success()
+        run: cat outputs/upstream_bath/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: upstream-bath-audit
+          path: outputs/upstream_bath/
+          retention-days: 30
+          if-no-files-found: warn
+
+  heom:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install QuTiP and numerical dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Test Jordan-Wigner physical operators
+        run: python -m pytest -q tests/test_fermionic_heom_reference.py
+      - name: Run short-time fermionic HEOM at two temperatures and depths
+        run: python scripts/fermionic_heom_reference.py
+      - name: Report hierarchy diagnostic
+        if: success()
+        run: cat outputs/fermionic_heom/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fermionic-heom-intermediate
+          path: outputs/fermionic_heom/
+          retention-days: 30
+          if-no-files-found: warn
