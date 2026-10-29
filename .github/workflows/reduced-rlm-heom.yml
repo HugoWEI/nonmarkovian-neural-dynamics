@@ -1,0 +1,65 @@
+name: Reduced fermionic RLM exact reference versus HEOM
+
+on:
+  push:
+    paths:
+      - "src/nonmarkovian_neural_dynamics/exact_rlm.py"
+      - "scripts/spinless_rlm_heom.py"
+      - "tests/test_exact_rlm.py"
+      - ".github/workflows/reduced-rlm-heom.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  reduced-heom:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ratio: "3.0"
+            label: high
+          - ratio: "0.3"
+            label: low
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install QuTiP and test dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Validate independent quadratic solution
+        run: python -m pytest -q tests/test_exact_rlm.py
+      - name: Compare HEOM to independent Gaussian-fermion continuum reference
+        run: |
+          timeout --signal=TERM --kill-after=15s 480s python scripts/spinless_rlm_heom.py \
+            --ratio ${{ matrix.ratio }} --depths 2,3,4,5 \
+            --output outputs/reduced_rlm/${{ matrix.label }}
+      - name: Show independent reference comparison
+        if: success()
+        run: cat outputs/reduced_rlm/${{ matrix.label }}/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reduced-rlm-${{ matrix.label }}
+          path: outputs/reduced_rlm/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Report run ID for connected review
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 3 --body "Reduced RLM ${{ matrix.label }}: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; job result **${RESULT}**; commit \`${GITHUB_SHA}\`."
