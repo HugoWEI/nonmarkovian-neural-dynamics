@@ -18,6 +18,17 @@ python -m pytest -q
 
 The first experiment verifies an **exact adjoint-residual identity** in a simplified linear exponential-memory model. This is a pedagogical mathematical check, **not** a fermionic DQME or a quantum hardware experiment.
 
+## Independent quantum PINN validation (2026-10-29)
+
+A **separate** zero-temperature Lorentzian-bath qubit/pseudomode benchmark is available at [`scripts/quantum_pinn.py`](scripts/quantum_pinn.py). It compares uniformly weighted PINN training with adjoint-weighted training against a two-state exact solution, and is intentionally **not** called a reproduction of the finite-temperature fermionic Anderson PINN-DQME study.
+
+- [Initial four neural runs](results/2026-10-29-independent-pinn.md)
+- [Four-seed robustness check](results/2026-10-29-seed-robustness.md): the present weighting worsened strong-memory global RMSE for all seeds; no new improvement established
+- [Upstream reproduction audit](docs/upstream_reproduction_audit.md) and [missing checkpoint issue](../../issues/2)
+- Automated runs: [quantum PINN](../../actions/workflows/quantum-pinn.yml) and [seed robustness](../../actions/workflows/seed-robustness.yml), both CPU-only
+
+For local execution: `python -m pip install -e '.[research,dev]'` then `python scripts/quantum_pinn.py --steps 2000`.
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
