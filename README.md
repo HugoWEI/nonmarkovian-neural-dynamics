@@ -64,6 +64,20 @@ The outstanding task is still to reproduce the **published low-temperature fermi
 
 **Status:** These source checks and cloud test scripts have been committed; successful remote QuTiP execution, hierarchy convergence, and published PINN-DQME reproduction remain **unverified**. See [Issue #3](../../issues/3).
 
+## Phase 1D — Verified convergence and long-time numerical reference (2026-10-30)
+
+Cloud jobs are now fully inspectable via the connected GitHub interface: both exact bath checks and numerical HEOM runs post their run IDs to [Issue #3](../../issues/3).
+
+- [Two-axis Nk/depth study](results/2026-10-30-heom-two-axis-run1.md)
+- [Source-beyond-order Padé refinement](results/2026-10-30-verified-pade-refinement.md)
+- [Correlated full-ADO voltage quench and physicality check](results/2026-10-30-correlated-physicality-depth2.md)
+- [**6 ps long-time hierarchy comparison**](results/2026-10-30-longtime-depth2-depth3.md)
+- [Rigorous observable-specific residual/adjoint identity](docs/observable_adjoint_identity.md)
+
+**Main numerical finding:** at source Padé orders, full-trajectory depth-2 vs depth-3 occupation differences on [0,6 ps] were 0.000725 for high T and **0.005631 for low T**. The low-T discrepancy grows markedly from its 1.5-ps counterpart, so a depth-2 prediction is not an accurate long-time reference.
+
+We have **not** reproduced the original correlated DQME initial state or demonstrated a novel neural solver. Before training a model, we need a deeper/converged reference or a reduced physical system allowing an exact independent benchmark. High low-T HEOM depth is computationally expensive (679,121 ADOs at depth 4 for source Nk=7).
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
