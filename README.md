@@ -55,6 +55,15 @@ The outstanding task is still to reproduce the **published low-temperature fermi
 
 **Limitations:** The current HEOM implementation is a source-anchored *intermediate* model. Full equivalence of chemical-potential phases, hierarchy construction, and Padé/HEOM convergence has not been verified; the upstream PINN tutorial still requires a missing checkpoint. No novel neural-solver performance has been demonstrated.
 
+## Phase 1C — Source-state, lead-phase, and HEOM complexity audit (2026-10-30)
+
+- [Original source-state and chemical-potential phase audit](results/2026-10-30-source-state-and-phase-audit.md): the original stored state is **not** an empty impurity, and the full correlated initial hierarchy is not recovered merely by copying four occupations.
+- [Source-phase check](scripts/upstream_phase_check.py) and [QuTiP vs source correlation test](scripts/verify_quutip_correlations.py): validate both fermionic C+ and C- sectors at both source temperatures and lead chemical potentials.
+- [Fermionic hierarchy growth analysis](scripts/heom_resource_envelope.py): source-matched exponent count at high/low temperatures is 32/64, giving 529/2081 ADOs at depth 2.
+- [GitHub Actions HEOM and input audit](.github/workflows/continuum-heom.yml) now gates the dynamical calculation on bath-correlation matching and records original-state checks.
+
+**Status:** These source checks and cloud test scripts have been committed; successful remote QuTiP execution, hierarchy convergence, and published PINN-DQME reproduction remain **unverified**. See [Issue #3](../../issues/3).
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
