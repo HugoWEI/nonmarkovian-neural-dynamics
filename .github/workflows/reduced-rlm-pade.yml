@@ -1,0 +1,59 @@
+name: Reduced RLM Padé refinement versus exact physics
+
+on:
+  push:
+    paths:
+      - "scripts/spinless_pade_refinement.py"
+      - ".github/workflows/reduced-rlm-pade.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  pade-refinement:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ratio: "3.0"
+            label: high
+          - ratio: "0.3"
+            label: low
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Check Padé order at fixed depth against independent quadratic dynamics
+        run: |
+          timeout --signal=TERM --kill-after=15s 480s python scripts/spinless_pade_refinement.py \
+            --ratio ${{ matrix.ratio }} --output outputs/reduced_pade/${{ matrix.label }}
+      - name: Publish comparison
+        if: success()
+        run: cat outputs/reduced_pade/${{ matrix.label }}/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reduced-pade-${{ matrix.label }}
+          path: outputs/reduced_pade/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Report run ID
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 3 --body "Reduced Padé ${{ matrix.label }}: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; job result **${RESULT}**; commit \`${GITHUB_SHA}\`."
