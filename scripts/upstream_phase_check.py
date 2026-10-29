@@ -5,7 +5,10 @@ where original gamma has negative real part. QuTiP C_sigma uses exp(-vk t),
 with vk = rate - sigma*1j*mu/hbar.
 """
 import numpy as np
-from scripts.pade_source_match import HBAR, reconstruct
+if __package__:
+    from .pade_source_match import HBAR, reconstruct
+else:
+    from pade_source_match import HBAR, reconstruct
 
 
 def upstream_exponents(rates, mu_mev, sign_index):
