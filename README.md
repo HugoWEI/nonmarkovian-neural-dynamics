@@ -29,6 +29,19 @@ A **separate** zero-temperature Lorentzian-bath qubit/pseudomode benchmark is av
 
 For local execution: `python -m pip install -e '.[research,dev]'` then `python scripts/quantum_pinn.py --steps 2000`.
 
+## Phase 1: finite-temperature interacting fermion benchmark (2026-10-29)
+
+A **finite-bath spinful Anderson impurity with Hubbard interaction U=1** is now implemented and checked against exact many-body unitary time evolution. The bath starts in a finite-temperature thermal state. Its small finite reservoir is **not equivalent to the continuum-bath fermionic DQME/HEOM model in Cao et al.**
+
+- [Exact interacting reference](src/nonmarkovian_neural_dynamics/finite_anderson.py)
+- [Full-interval fermionic PINN](scripts/finite_anderson_pinn.py) — [remote workflow](.github/workflows/finite-anderson.yml)
+- [Time-domain-decomposed PINN](scripts/finite_anderson_piecewise.py) — [remote workflow](.github/workflows/piecewise-anderson.yml)
+- [Detailed local results, assumptions, and limitations](results/2026-10-29-finite-anderson-reference.md)
+
+In a single-seed test using 3000 optimization steps, the T=0.3 global model has occupation RMSE 0.238 on [0,5]; the five-window PINN achieves RMSE 0.00440. The time-domain decomposition is **published baseline methodology**, not a new research result. The two methods also use different collocation counts per step and are not controlled at perfectly equal wall-clock cost.
+
+The outstanding task is still to reproduce the **published low-temperature fermionic PINN-DQME error** against a converged HEOM solution. See [missing-checkpoint blocker](../../issues/2).
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
