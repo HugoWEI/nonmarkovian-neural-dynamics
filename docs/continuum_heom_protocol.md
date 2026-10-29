@@ -28,13 +28,11 @@ Reproduce: `python scripts/upstream_bath_audit.py`. The workflow pulls data from
 
 `python scripts/fermionic_heom_reference.py` implements the interacting local Hamiltonian (Jordan-Wigner spin-up and spin-down fermions) coupled to four continuum Lorentzian baths, one per spin and lead. Padé expansion and finite-depth hierarchy are handled by QuTiP.
 
-The following are **provisional**:
-- spectral coupling gamma = 0.05 meV per lead;
-- Lorentzian width W = 5 meV;
-- chemical potentials (0,0.05) meV;
-- Gamma=0.1 meV scale used to translate T/Gamma labels into temperature.
+A new independent Padé derivation (see `scripts/pade_source_match.py`) reproduces the checked source coefficients to approximately numerical precision using **Gamma=0.1 meV**, bandwidth **W=5 meV**, and `hbar=0.658211928` meV ps, with thermal energies `T_mev=0.3` (T/Gamma=3) and `T_mev=0.03` (T/Gamma=0.3). The low/high source uses Nk=7/3 Padé poles plus the Lorentzian pole.
 
-**Even though these numbers are motivated by source conventions, the fitted bath coefficients have not been shown to match the authors' res_corr data.** QuTiP's fermionic correlation normalization and exponent/chemical-potential conventions must be mapped explicitly before a like-for-like comparison.
+The QuTiP code has been corrected from the previous provisional Gamma=0.05 meV to the source-matched Gamma=0.1 meV. The two chemical potentials (0, 0.05 meV) are drawn from upstream `chem_potentials.data`.
+
+**Still unverified:** QuTiP's sign/lead chemical-potential phase and operator conventions relative to the original dissipaton hierarchy, hierarchy-depth convergence, Padé-truncation convergence, and actual numerical reproduction of the published PINN trajectories. A match of the individual zero-phase coefficients alone does not certify a full HEOM reference.
 
 ### Required checks before claiming a converged reference
 
