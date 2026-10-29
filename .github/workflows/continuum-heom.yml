@@ -5,8 +5,10 @@ on:
   push:
     paths:
       - "scripts/upstream_bath_audit.py"
+      - "scripts/pade_source_match.py"
       - "scripts/fermionic_heom_reference.py"
       - "tests/test_published_bath.py"
+      - "tests/test_pade_match.py"
       - "tests/test_fermionic_heom_reference.py"
       - ".github/workflows/continuum-heom.yml"
 
@@ -26,16 +28,24 @@ jobs:
         run: python -m pip install -e '.[dev]'
       - name: Test parser
         run: python -m pytest -q tests/test_published_bath.py
+      - name: Verify exact Padé coefficients locally
+        run: python -m pytest -q tests/test_pade_match.py
       - name: Analyze pinned original bath data
         run: python scripts/upstream_bath_audit.py
+      - name: Reconstruct exact-source Lorentzian Padé coefficients
+        run: python scripts/pade_source_match.py
       - name: Show source-based summary
         if: success()
-        run: cat outputs/upstream_bath/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+        run: |
+          cat outputs/upstream_bath/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+          cat outputs/pade_source_match/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: upstream-bath-audit
-          path: outputs/upstream_bath/
+          path: |
+            outputs/upstream_bath/
+            outputs/pade_source_match/
           retention-days: 30
           if-no-files-found: warn
 
