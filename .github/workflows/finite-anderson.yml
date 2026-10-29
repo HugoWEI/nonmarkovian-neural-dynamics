@@ -1,0 +1,42 @@
+name: Finite-temperature fermionic Anderson PINN (CPU)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "src/nonmarkovian_neural_dynamics/finite_anderson.py"
+      - "scripts/finite_anderson_pinn.py"
+      - "tests/test_finite_anderson.py"
+      - ".github/workflows/finite-anderson.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  finite-anderson:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install numerical package
+        run: python -m pip install -e '.[dev]'
+      - name: Install CPU PyTorch
+        run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Test Hamiltonian and conserved quantities
+        run: python -m pytest -q tests/test_finite_anderson.py
+      - name: Train neural baselines against exact reference
+        run: python scripts/finite_anderson_pinn.py --steps 3000
+      - name: Write job summary
+        if: success()
+        run: cat outputs/finite_anderson/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload result files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finite-anderson-reference-and-pinn
+          path: outputs/finite_anderson/
+          retention-days: 30
+          if-no-files-found: warn
