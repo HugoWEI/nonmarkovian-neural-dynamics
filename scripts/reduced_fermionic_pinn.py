@@ -13,18 +13,21 @@ from scipy.linalg import eigh
 from scipy.special import expit
 from nonmarkovian_neural_dynamics.exact_rlm import HBAR,quadrature
 
-def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=40):
+def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=40,
+          goal_weight=.5,norm_weight=0.,dot_energy=-.5,gamma=.1):
     import torch
     if mode not in ("uniform","projected","integrated","global_projected","global_integrated"): raise ValueError(mode)
     if steps % nwindows: raise ValueError("Steps must divide evenly between windows")
+    if not 0.<=goal_weight<=1. or norm_weight<0. or gamma<=0.:
+        raise ValueError("Invalid loss weights or coupling")
     torch.set_num_threads(1)
     torch.manual_seed(seed)
     dtype=torch.float64
     # 20 discrete fermionic bath modes: a small exactly solved learning test,
     # NOT a continuum-extrapolated physical reference.
     E,Q=quadrature(n=2,cutoff=20.)
-    V=np.sqrt(.1*5.**2/(E**2+5.**2)*Q/(2*np.pi))
-    H=np.diag(np.r_[-.5,E])
+    V=np.sqrt(gamma*5.**2/(E**2+5.**2)*Q/(2*np.pi))
+    H=np.diag(np.r_[dot_energy,E])
     H[0,1:]=V;H[1:,0]=V
     A=H/HBAR;N=len(A)
     eigen,vec=eigh(A)
@@ -88,7 +91,10 @@ def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=
                     auxiliary=projection.square().mean()/denom/N
                 else:
                     auxiliary=projection.mean().square()/denom/N
-                loss=.5*ordinary+.5*auxiliary
+                loss=(1.-goal_weight)*ordinary+goal_weight*auxiliary
+            if norm_weight>0:
+                norm_sq=(re.square()+im.square()).sum(dim=1)
+                loss=loss+norm_weight*((norm_sq-1.)**2).mean()
             loss.backward()
             optimizer.step()
         local_times=np.linspace(0,window_duration,51)
@@ -105,6 +111,8 @@ def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=
     estimated=np.abs(wave)**2@occupation_weights
     truth=np.interp(times,time_grid,exact_n)
     return {"mode":mode,"T_mev":temp,"seed":seed,"fermionic_modes":N,
+            "goal_weight":goal_weight,"norm_weight":norm_weight,
+            "dot_energy":dot_energy,"gamma":gamma,
             "total_steps":steps,"windows":nwindows,
             "occupation_rmse":float(np.sqrt(np.mean((estimated-truth)**2))),
             "terminal_occupation_abs_error":float(abs(estimated[-1]-exact_n[-1])),
