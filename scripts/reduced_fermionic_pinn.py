@@ -15,7 +15,7 @@ from nonmarkovian_neural_dynamics.exact_rlm import HBAR,quadrature
 
 def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=40):
     import torch
-    if mode not in ("uniform","projected","integrated"): raise ValueError(mode)
+    if mode not in ("uniform","projected","integrated","global_projected","global_integrated"): raise ValueError(mode)
     if steps % nwindows: raise ValueError("Steps must divide evenly between windows")
     torch.set_num_threads(1)
     torch.manual_seed(seed)
@@ -52,6 +52,11 @@ def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=
             np.exp(-1j*np.outer(window_duration-collocation.numpy().ravel(),eigen)),
             vec.conj())
         dual_matrices=torch.tensor(propagators,dtype=torch.complex128)
+        # For global objectives, propagate the current window endpoint to the
+        # end of the entire experiment before differentiating the terminal
+        # occupation. Unlike a local adjoint, this targets O(horizon).
+        remaining=horizon-(window+1)*window_duration
+        future_U=(vec*np.exp(1j*eigen*remaining)[None,:])@vec.conj().T
         def evaluate(t):
             d=(t*net(t/window_duration)).reshape(-1,2,N)
             return initial_real[None,:]+d[:,0],initial_imag[None,:]+d[:,1]
@@ -69,11 +74,17 @@ def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=
             else:
                 with torch.no_grad():
                     rT,iT=evaluate(torch.tensor([[window_duration]],dtype=dtype))
-                    grad=W*(rT[0]+1j*iT[0])
+                    if mode.startswith("global_"):
+                        w_end=(rT[0]+1j*iT[0]).numpy()
+                        w_future=future_U@w_end
+                        grad_window=future_U.conj().T@(occupation_weights*w_future)
+                        grad=torch.tensor(grad_window,dtype=torch.complex128)
+                    else:
+                        grad=W*(rT[0]+1j*iT[0])
                     adjoint=dual_matrices@grad
                 projection=torch.real((adjoint.conj()*(resid_re+1j*resid_im)).sum(1))
                 denom=torch.clamp(adjoint.abs().square().sum(1).mean(),min=1e-10)
-                if mode=="projected":
+                if mode in ("projected","global_projected"):
                     auxiliary=projection.square().mean()/denom/N
                 else:
                     auxiliary=projection.mean().square()/denom/N
