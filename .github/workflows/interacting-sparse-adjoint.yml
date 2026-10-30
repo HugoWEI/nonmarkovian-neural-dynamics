@@ -20,14 +20,29 @@ jobs:
       matrix:
         include:
           - ratio: "3.0"
+            nk: 3
             depth: 2
             label: high-d2
           - ratio: "0.3"
+            nk: 3
             depth: 2
             label: low-d2
           - ratio: "0.3"
+            nk: 3
             depth: 3
-            label: low-d3
+            label: low-nk3-d3
+          - ratio: "0.3"
+            nk: 3
+            depth: 4
+            label: low-nk3-d4
+          - ratio: "0.3"
+            nk: 5
+            depth: 3
+            label: low-nk5-d3
+          - ratio: "0.3"
+            nk: 7
+            depth: 3
+            label: low-nk7-d3
     runs-on: ubuntu-latest
     timeout-minutes: 12
     env:
@@ -47,7 +62,7 @@ jobs:
       - name: Check interacting correlated-state HEOM sensitivities
         run: |
           timeout --signal=TERM --kill-after=20s 420s python scripts/interacting_sparse_adjoint.py \
-            --ratio ${{ matrix.ratio }} --nk 3 --depth ${{ matrix.depth }} --samples 81 \
+            --ratio ${{ matrix.ratio }} --nk ${{ matrix.nk }} --depth ${{ matrix.depth }} --samples 81 \
             --output outputs/interacting_adjoint/${{ matrix.label }}
       - name: Report measured sensitivities and FD error
         if: success()
