@@ -14,7 +14,7 @@ from scipy.special import expit
 from nonmarkovian_neural_dynamics.exact_rlm import HBAR,quadrature
 
 def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=40,
-          goal_weight=.5,norm_weight=0.,dot_energy=-.5,gamma=.1):
+          goal_weight=.5,norm_weight=0.,dot_energy=-.5,gamma=.1,unit_norm=False):
     import torch
     if mode not in ("uniform","projected","integrated","global_projected","global_integrated"): raise ValueError(mode)
     if steps % nwindows: raise ValueError("Steps must divide evenly between windows")
@@ -62,7 +62,15 @@ def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=
         future_U=(vec*np.exp(1j*eigen*remaining)[None,:])@vec.conj().T
         def evaluate(t):
             d=(t*net(t/window_duration)).reshape(-1,2,N)
-            return initial_real[None,:]+d[:,0],initial_imag[None,:]+d[:,1]
+            re=initial_real[None,:]+d[:,0]
+            im=initial_imag[None,:]+d[:,1]
+            if unit_norm:
+                # Explicitly project the full wave onto the unit sphere.
+                # Differentiable and exact to roundoff, unlike a soft penalty.
+                length=torch.sqrt((re.square()+im.square()).sum(1,keepdim=True)
+                                  .clamp_min(1e-12))
+                re,im=re/length,im/length
+            return re,im
         for _ in range(steps//nwindows):
             optimizer.zero_grad(set_to_none=True)
             re,im=evaluate(collocation)
@@ -112,7 +120,7 @@ def train(mode="uniform",temp=.03,seed=7,steps=1200,nwindows=4,horizon=6.,width=
     truth=np.interp(times,time_grid,exact_n)
     return {"mode":mode,"T_mev":temp,"seed":seed,"fermionic_modes":N,
             "goal_weight":goal_weight,"norm_weight":norm_weight,
-            "dot_energy":dot_energy,"gamma":gamma,
+            "dot_energy":dot_energy,"gamma":gamma,"unit_norm":unit_norm,
             "total_steps":steps,"windows":nwindows,
             "occupation_rmse":float(np.sqrt(np.mean((estimated-truth)**2))),
             "terminal_occupation_abs_error":float(abs(estimated[-1]-exact_n[-1])),
