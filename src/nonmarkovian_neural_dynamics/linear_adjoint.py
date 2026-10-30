@@ -31,41 +31,45 @@ def sparse_generator(solver):
     return mat
 
 
-def adjoint_sensitivity(L, dL, state, observable, T=6., samples=81):
-    """Exact finite-hierarchy adjoint identity, numerically quadrature-approximated.
-
-    \partial_p O(T) = Re \int_0^T z(t)^* (dL/dp) y(t) dt,
-    z(t) = exp[L^*(T-t)] c, y(t)=exp[L t]y0.
-
-    Assumes a fixed initial hierarchy, a time-independent generator, and
-    a linear observable represented by c* y. It does not approximate the
-    potentially expensive generator: the 'approximate' part is the chosen
-    hierarchy depth and finite quadrature grid.
-    """
+def adjoint_trajectory(L, state, observable, T=6., samples=81):
+    """Compute reusable sparse forward and dual trajectories only ONCE."""
     if samples < 5 or samples % 2 != 1:
         raise ValueError("Simpson quadrature needs odd sample count >= 5")
     state = np.asarray(state, dtype=np.complex128).reshape(-1)
     c = np.asarray(observable, dtype=np.complex128).reshape(-1)
     if L.shape[0] != len(state) or len(c) != len(state):
         raise ValueError("HEOM/observable dimension mismatch")
-    grid = np.linspace(0., float(T), samples)
-    trace_L = np.sum(L.diagonal())
-    forward = expm_multiply(L, state, start=0., stop=T, num=samples,
-                            endpoint=True, traceA=trace_L)
-    LH = L.conj().T.tocsr()
-    adjoint_forward = expm_multiply(
-        LH, c, start=0., stop=T, num=samples, endpoint=True,
-        traceA=np.conj(trace_L)
-    )
-    adjoint = adjoint_forward[::-1]
-    source = (dL @ forward.T).T
-    integrand = np.einsum("ij,ij->i", adjoint.conj(), source)
-    value = float(np.real(simpson(integrand, x=grid)))
-    terminal = float(np.real(np.vdot(c, forward[-1])))
-    return value, terminal, {
-        "integrand_abs_max": float(np.max(np.abs(integrand))),
-        "quadrature_samples": samples,
-        "terminal_occupation": terminal,
+    grid=np.linspace(0.,float(T),samples)
+    trace_L=np.sum(L.diagonal())
+    forward=expm_multiply(L,state,start=0.,stop=T,num=samples,
+                          endpoint=True,traceA=trace_L)
+    dual_L=L.conj().T.tocsr()
+    backward=expm_multiply(dual_L,c,start=0.,stop=T,num=samples,
+                           endpoint=True,traceA=np.conj(trace_L))[::-1]
+    return grid,forward,backward
+
+
+def contract_sensitivity(dL, trajectory):
+    """One cheap sparse contraction/quadrature per extra parameter."""
+    grid,forward,backward=trajectory
+    forcing=(dL@forward.T).T
+    integrand=np.einsum("ij,ij->i",backward.conj(),forcing)
+    return float(np.real(simpson(integrand,x=grid)))
+
+
+def adjoint_sensitivity(L, dL, state, observable, T=6., samples=81):
+    """Return derivative at fixed y0; wrapper retains old test interface."""
+    trajectory=adjoint_trajectory(L,state,observable,T,samples)
+    value=contract_sensitivity(dL,trajectory)
+    terminal=float(np.real(np.vdot(
+        np.asarray(observable,dtype=np.complex128).reshape(-1),
+        trajectory[1][-1])))
+    forcing=(dL@trajectory[1].T).T
+    integrand=np.einsum("ij,ij->i",trajectory[2].conj(),forcing)
+    return value,terminal,{
+        "integrand_abs_max":float(np.max(np.abs(integrand))),
+        "quadrature_samples":samples,
+        "terminal_occupation":terminal,
     }
 
 
