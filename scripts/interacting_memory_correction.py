@@ -23,7 +23,7 @@ from nonmarkovian_neural_dynamics.memory_feedback import (
 )
 
 
-def run(ratio,nk,depth_hi,output):
+def run(ratio,nk,depth_hi,output,mu_mev=.05):
     out=Path(output);out.mkdir(parents=True,exist_ok=True)
     depth_lo=depth_hi-1
     t0=time.perf_counter()
@@ -31,10 +31,14 @@ def run(ratio,nk,depth_hi,output):
     _,ados=equilibrium.steady_state(use_mkl=False)
     preparation_s=time.perf_counter()-t0
     y0lo=np.asarray(ados._ado_state,dtype=complex).reshape(-1)
-    low,op=build(ratio,nk,depth_lo,.05,1.)
-    high,_=build(ratio,nk,depth_hi,.05,1.)
+    t0=time.perf_counter()
+    low,op=build(ratio,nk,depth_lo,mu_mev,1.)
     Alo=sparse_generator(low)
+    low_generator_s=time.perf_counter()-t0
+    t0=time.perf_counter()
+    high,_=build(ratio,nk,depth_hi,mu_mev,1.)
     Ahi=sparse_generator(high)
+    high_generator_s=time.perf_counter()-t0
     indices=hierarchy_retained_indices(low.ados.labels,high.ados.labels,16)
     A,B,C,D,omitted=partition_nested(Ahi,Alo,indices)
     c_low=occupation_functional(op,len(low.ados.labels))
@@ -60,10 +64,17 @@ def run(ratio,nk,depth_hi,output):
     corrected_error=abs(reference-predicted_total)
     report={
       "ratio":ratio,"Nk":nk,"low_depth":depth_lo,"high_depth":depth_hi,
+      "post_quench_mu_mev":mu_mev,
+      "low_generator_build_seconds":low_generator_s,
+      "high_generator_build_seconds":high_generator_s,
       "n_ados_lo":len(low.ados.labels),"n_ados_hi":len(high.ados.labels),
       "lower_correlated_state_preparation_seconds":preparation_s,
       "memory_predictor_seconds":predictor_s,
       "independent_high_depth_forward_seconds":high_s,
+      "predictor_total_seconds_no_exact_high_forward":(
+          preparation_s+low_generator_s+high_generator_s+predictor_s),
+      "direct_high_total_seconds_same_initial":(
+          preparation_s+low_generator_s+high_generator_s+high_s),
       "baseline_low_depth_terminal_occupation":baseline,
       "independent_high_depth_terminal_occupation":reference,
       "true_high_minus_low_correction":true_correction,
@@ -93,7 +104,10 @@ def run(ratio,nk,depth_hi,output):
                 "true_high_minus_low_correction","first_order_memory_correction",
                 "uncorrected_abs_error","corrected_abs_error",
                 "error_reduction_fraction","memory_predictor_seconds",
-                "independent_high_depth_forward_seconds"):
+                "independent_high_depth_forward_seconds",
+                "low_generator_build_seconds","high_generator_build_seconds",
+                "predictor_total_seconds_no_exact_high_forward",
+                "direct_high_total_seconds_same_initial"):
         lines.append(f"| {key} | {report[key]:.8g} |")
     lines+=["",
         "A positive error reduction would validate a first-order block-memory",
@@ -112,5 +126,6 @@ if __name__=="__main__":
     p.add_argument("--nk",type=int,required=True)
     p.add_argument("--high-depth",type=int,default=3)
     p.add_argument("--output",required=True)
+    p.add_argument("--mu",type=float,default=.05)
     a=p.parse_args()
-    run(a.ratio,a.nk,a.high_depth,a.output)
+    run(a.ratio,a.nk,a.high_depth,a.output,mu_mev=a.mu)
