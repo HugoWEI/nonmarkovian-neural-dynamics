@@ -1,0 +1,55 @@
+name: Global-observable neural adjoint ablation (CPU)
+
+on:
+  push:
+    paths:
+      - "scripts/reduced_fermionic_pinn.py"
+      - "scripts/global_goal_ablation.py"
+      - "tests/test_goal_error.py"
+      - "tests/test_global_goal_smoke.py"
+      - ".github/workflows/global-goal-ablation.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  global-goal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU research dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Verify global residual identity including window jumps
+        run: python -m pytest -q tests/test_goal_error.py tests/test_global_goal_smoke.py
+      - name: Compare 5 objectives x 5 seeds x 2 temperatures
+        run: python scripts/global_goal_ablation.py --steps 1200
+      - name: Summarize accuracy and total training time
+        if: success()
+        run: cat outputs/global_goal/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: global-goal-neural-ablation
+          path: outputs/global_goal/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Record run ID in Issue 4
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 4 --body "Global goal ablation: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; result **${RESULT}**; commit \`${GITHUB_SHA}\`."
