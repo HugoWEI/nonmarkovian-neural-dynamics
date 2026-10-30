@@ -104,6 +104,20 @@ We now have an independent *quadratic fermion* physical reference and a one-bath
 
 **Observed:** In an exactly solvable 20-mode finite-bath model, explicitly forecasting the *global terminal occupation* reduces mean terminal error by 81.1% (T=0.03 meV) and 79.4% (T=0.3 meV) relative to uniform-residual piecewise PINN across five seeds. But full-trajectory RMSE and wavefunction norm drift get worse, and the method uses a known exact quadratic propagator. **This is an optimization diagnostic, not a computational physics breakthrough or novel algorithm.**
 
+## Phase 3 — Genuine interacting quantum-memory benchmark (2026-10-30)
+
+After the quadratic neural objective failed Hamiltonian-robustness and compute-cost checks, the next benchmark keeps the **spinful Hubbard interaction U=1 meV** and reduces to one fermionic lead per spin. It prepares a **complete correlated HEOM steady-state hierarchy**, then performs a chemical-potential quench.
+
+- [Verified 6 ps interacting HEOM result](results/2026-10-30-interacting-onelead-correlated-heom.md)
+- [Reproducible solver implementation](scripts/interacting_onelead_heom.py)
+- [Hosted runs and artifacts](.github/workflows/interacting-onelead.yml)
+- [Low-T Nk5 refinement workflow](.github/workflows/interacting-low-nk5.yml)
+- [Phase 3 research checklist](../../issues/5)
+- [Overall scientific status and negative results](docs/research_status_2026-10-30.md)
+- [Hard-norm neural failures under parameter changes](results/2026-10-30-unitnorm-hamiltonian-stress-test.md)
+
+At Nk=3, increasing depth from 2 to 3 changes occupation by at most **6.04e-5 at T/Gamma=3** versus **1.66e-3 at T/Gamma=0.3**, on the 6 ps correlated quench. This is a *genuine interacting numerical benchmark*, not the authors' two-lead initial state nor a converged low-temperature target. **No original neural solver improvement is yet demonstrated.**
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
