@@ -1,0 +1,63 @@
+name: Interacting one-lead full-ADO HEOM benchmark (CPU)
+
+on:
+  push:
+    paths:
+      - "scripts/interacting_onelead_heom.py"
+      - ".github/workflows/interacting-onelead.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  reference:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ratio: "3.0"
+            label: high
+          - ratio: "0.3"
+            label: low
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install source-anchored fermionic HEOM
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Check spinful interacting Hamiltonian and fermion signs
+        run: python -m pytest -q tests/test_fermionic_heom_reference.py
+      - name: Prepare complete steady-state ADOs and evolve voltage quench
+        run: |
+          timeout --signal=TERM --kill-after=20s 240s python scripts/interacting_onelead_heom.py \
+            --ratio ${{ matrix.ratio }} --nk 3 --depths 2,3 \
+            --output outputs/interacting_onelead/${{ matrix.label }}
+      - name: Publish hierarchy and positivity diagnostics
+        if: success()
+        run: cat outputs/interacting_onelead/${{ matrix.label }}/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: interacting-correlated-${{ matrix.label }}
+          path: outputs/interacting_onelead/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Report run ID and outcome
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 5 --body "Interacting onelead ${{ matrix.label }}: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; result **${RESULT}**; commit \`${GITHUB_SHA}\`."
