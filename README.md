@@ -118,6 +118,19 @@ After the quadratic neural objective failed Hamiltonian-robustness and compute-c
 
 At Nk=3, increasing depth from 2 to 3 changes occupation by at most **6.04e-5 at T/Gamma=3** versus **1.66e-3 at T/Gamma=0.3**, on the 6 ps correlated quench. This is a *genuine interacting numerical benchmark*, not the authors' two-lead initial state nor a converged low-temperature target. **No original neural solver improvement is yet demonstrated.**
 
+## Phase 4 — Interacting hierarchy backflow, adjoints and memory correction (2026-10-30)
+
+Validated on a **genuinely interacting** source-inspired one-lead Anderson model, with correlated depth2/3 HEOM initial states and fixed quench dynamics:
+
+- [Verified sparse interacting adjoint sensitivities](results/2026-10-30-interacting-adjoint-gradient-audit.md): gradients with respect to lead chemical potential and Hubbard U independently checked against finite differences. Low-T source-order Nk7 depth3 ∂μ n_up(6ps) ≈ 0.08103 per meV. Sensitivities can be much more hierarchy- and Padé-sensitive than occupations.
+- [Compressed reusable adjoints](results/2026-10-30-compressed-interacting-heom-dual.md): rank8 compresses sampled dual by ~10x storage and reproduces two tested gradients to ~1e-7; no demonstrated end-to-end speedup.
+- [Exact observable-specific hierarchy backflow decomposition](results/2026-10-30-interacting-hierarchy-backflow-identity.md): at low T Nk7, true depth2–depth3 occupation error -0.00139136 decomposes into ~20% omitted initial correlated ADOs and ~80% dynamic omitted-tier feedback; verified to ~4e-11 quadrature error.
+- [First-order omitted-tier memory feedback](results/2026-10-30-first-order-memory-feedback.md) and [parameter/cost audit](results/2026-10-30-memory-voltage-robustness.md): corrects ~73–77% of 6ps low-T terminal error, with only **~15–20% faster paired CPU time** under the same depth2-prepared state. At 12ps low-T improvement drops to ~36%.
+- [New learned higher-order closure experiment](.github/workflows/interacting-neural-closure.yml): train a small network on a **12ps interacting HEOM** parameter grid to learn only the residual missing after the classical first-order memory approximation; evaluate held-out and extrapolated quench/Hubbard parameters against **classical interpolation** and direct high-depth HEOM.
+- [Phase 3/4 tasks and research caveats](../../issues/5).
+
+**Do not claim novelty yet.** Schur-complement HEOM terminators, memory-kernel projections and learned Volterra kernels have close prior art, including Vadimov (SciPost Phys. Core 2026) and Adriazola–Roszak (Phys. Rev. A accepted September 2026). The first-order approximation is established physics; the new neural experiment is a *falsification test* that must beat strong classical baselines at complete amortized cost. The shared low-depth initial state has no nonzero ADOs in omitted higher tiers; it does not reproduce the original paper's full two-lead correlated state.
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
