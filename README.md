@@ -94,6 +94,16 @@ We now have an independent *quadratic fermion* physical reference and a one-bath
 
 **This is not a reproduction of the authors' correlated interacting SIAM DQME model.**
 
+## Phase 2B — Global-terminal neural error control (2026-10-30)
+
+- [Exact residual/observable identity, window jumps, and finite-difference gradient verification](docs/global_terminal_observable_control.md)
+- [Verified 50-run multi-seed global-target ablation](results/2026-10-30-global-terminal-five-seeds.md) — [GitHub Actions run](../../actions/runs/40977959682)
+- [Global-goal cloud workflow](.github/workflows/global-goal-ablation.yml)
+- [Preregistered norm/accuracy trade-off workflow](.github/workflows/global-norm-pareto.yml)
+- [Phase 2 research-go/no-go issue](../../issues/4)
+
+**Observed:** In an exactly solvable 20-mode finite-bath model, explicitly forecasting the *global terminal occupation* reduces mean terminal error by 81.1% (T=0.03 meV) and 79.4% (T=0.3 meV) relative to uniform-residual piecewise PINN across five seeds. But full-trajectory RMSE and wavefunction norm drift get worse, and the method uses a known exact quadratic propagator. **This is an optimization diagnostic, not a computational physics breakthrough or novel algorithm.**
+
 ## Research milestones
 
 1. Pin upstream NQS-DQME code and reproduce a published low-temperature benchmark.
