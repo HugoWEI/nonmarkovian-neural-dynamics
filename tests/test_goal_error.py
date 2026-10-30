@@ -54,3 +54,21 @@ def test_missing_jump_is_detectable():
     predicted=terminal_defect(H,s,jumps=[(1.,j)])
     omitted=terminal_defect(H,s)
     assert np.linalg.norm(predicted-omitted)>.01
+
+
+def test_global_terminal_gradient_matches_finite_difference():
+    """Ensure the global lookahead adjoint targets the right observable."""
+    H=np.array([[-.5,.13],[.13,.2]])
+    T=.7
+    F=np.diag([0.2,0.8])
+    endpoint=np.array([.6+.2j,-.3+.15j])
+    direction=np.array([.2-.11j,.12+.09j])
+    U=expm(1j*H*T/HBAR)
+    grad=U.conj().T@(F@(U@endpoint))
+    analytic=2*np.real(np.vdot(grad,direction))
+    eps=1e-6
+    def observe(w):
+        z=U@w
+        return np.real(np.vdot(z,F@z))
+    finite_diff=(observe(endpoint+eps*direction)-observe(endpoint-eps*direction))/(2*eps)
+    np.testing.assert_allclose(analytic,finite_diff,rtol=1e-8,atol=1e-10)
