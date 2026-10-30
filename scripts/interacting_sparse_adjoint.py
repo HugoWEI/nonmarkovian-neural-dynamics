@@ -5,7 +5,7 @@ import json
 import time
 from pathlib import Path
 import numpy as np
-from nonmarkovian_neural_dynamics.linear_adjoint import sparse_generator, adjoint_sensitivity, fixed_initial_fd
+from nonmarkovian_neural_dynamics.linear_adjoint import sparse_generator, adjoint_trajectory, contract_sensitivity, fixed_initial_fd
 
 def occupation_functional(op, n_ados):
     """Trace(op * rho0) as c^dagger y, compatible with row-major ADO flatten."""
@@ -53,6 +53,10 @@ def run(ratio,nk,depth,output,T=6.,samples=81):
     rho0=ado.rho
     assert abs(np.real(np.vdot(c,y0))-np.real(expect(op,rho0)))<1e-10
 
+    t0=time.perf_counter()
+    shared_trajectory=adjoint_trajectory(L,y0,c,T,samples)
+    common_forward_adjoint_s=time.perf_counter()-t0
+    nominal=float(np.real(np.vdot(c,shared_trajectory[1][-1])))
     rows=[]
     for name,delta in (("mu",.002),("U",.005)):
         if name=="mu":
@@ -67,8 +71,10 @@ def run(ratio,nk,depth,output,T=6.,samples=81):
         Lm=sparse_generator(minus)
         dL=(Lp-Lm)*(1/(2*delta))
         t0=time.perf_counter()
-        gradient,nominal,metadata=adjoint_sensitivity(L,dL,y0,c,T,samples)
-        adjoint_s=time.perf_counter()-t0
+        gradient=contract_sensitivity(dL,shared_trajectory)
+        contraction_s=time.perf_counter()-t0
+        adjoint_s=common_forward_adjoint_s+contraction_s
+        metadata={"quadrature_samples":samples}
         t0=time.perf_counter()
         fd=fixed_initial_fd(Lp,Lm,y0,c,T,delta)
         fd_s=time.perf_counter()-t0
@@ -84,6 +90,8 @@ def run(ratio,nk,depth,output,T=6.,samples=81):
             "terminal_occupation":nominal,
             "steady_setup_seconds":setup_s,
             "adjoint_seconds":adjoint_s,
+            "shared_forward_backward_seconds":common_forward_adjoint_s,
+            "marginal_contraction_seconds":contraction_s,
             "finite_difference_seconds":fd_s,
             **metadata
         }
