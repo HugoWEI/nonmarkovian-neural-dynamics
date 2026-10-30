@@ -1,0 +1,52 @@
+name: Interacting low-T depth4 hierarchy pilot at Nk3
+
+on:
+  push:
+    paths:
+      - ".github/workflows/interacting-low-depth4.yml"
+      - "scripts/interacting_onelead_heom.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  low-depth4:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Compare interacting correlated low-T depth 3/4 at Nk3
+        run: |
+          timeout --signal=TERM --kill-after=20s 240s python scripts/interacting_onelead_heom.py \
+            --ratio 0.3 --nk 3 --depths 3,4 \
+            --output outputs/interacting_low_depth4
+      - name: Show depth sensitivity and physicality
+        if: success()
+        run: cat outputs/interacting_low_depth4/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: interacting-low-depth4
+          path: outputs/interacting_low_depth4/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Report run ID
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 5 --body "Low-T interacting depth4 Nk3: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; result **${RESULT}**; commit \`${GITHUB_SHA}\`."
