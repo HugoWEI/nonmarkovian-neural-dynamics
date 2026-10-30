@@ -34,3 +34,18 @@ Only after a converged reference exists should we attempt an *efficient* approxi
 ## Portfolio wording (accurate today)
 
 > Developing reproducible numerical and neural benchmarks for finite-temperature non-Markovian open quantum dynamics. Reconstructed published fermionic reservoir correlation expansions, validated HEOM truncation effects, and studied goal-oriented PINN training with exact quantum-norm constraints and cross-parameter failure tests. Work in progress; no original solver performance claim yet.
+
+
+## Phase 3 verified follow-up: interacting correlated one-lead HEOM
+
+The reduced-channel **interacting** benchmark now runs on GitHub Actions with full correlated HEOM steady-state ADO initialization and a lead chemical-potential quench over 6 ps, at both temperatures.
+
+- At T/Gamma=3 and Nk=3, the full-trajectory maximum depth2/3 occupation discrepancy is 6.03709e-5.
+- At T/Gamma=0.3 and Nk=3, the depth2/3 discrepancy is 0.001657801.
+- Refining low T to Nk=5 and Nk=7 yields depth2/3 maximum differences of 0.001589744 and 0.001586066, respectively; at depth3, Nk5→Nk7 shifts the terminal occupation only 4.978e-5.
+- At low T, Nk7 depth3 requires ~47.9s to prepare a 5,489-ADO correlated steady state (actual measured GitHub CPU runtime). This is a real computational burden, unlike the trivial quadratic toy.
+- A separate low-T Nk3 depth4 test reduces the depth3/4 full-trajectory difference to 0.000174625, compared with 0.001657801 for depth2/3. This supports a hierarchy-convergence trend but is **not** a source-order Nk7 convergence certificate.
+
+See [interacting Nk7 source order](../results/2026-10-30-interacting-low-nk7-depth3.md), [depth4 pilot](../results/2026-10-30-interacting-low-depth4-pilot.md), and [Phase 3 issue](https://github.com/HugoWEI/nonmarkovian-neural-dynamics/issues/5).
+
+**Still open:** a fully converged, physically equivalent reference in the hard low-temperature regime; an actual efficient learned error-backflow method; and a positive cost-benefit result against strong numerical solvers.
