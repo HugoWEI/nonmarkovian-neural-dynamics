@@ -21,3 +21,21 @@ def test_dimension_validation():
     A=csr_matrix(np.eye(2))
     with raises(ValueError):
         adjoint_sensitivity(A,A,np.ones(3),np.ones(2))
+
+
+def test_shared_adjoint_two_perturbations():
+    from nonmarkovian_neural_dynamics.linear_adjoint import (
+        adjoint_trajectory,contract_sensitivity
+    )
+    A=csr_matrix([[-.3+.1j,.1],[-.2,-.4-.03j]],dtype=complex)
+    x=np.array([.5+.2j,.1-.3j])
+    c=np.array([1,0.4])
+    Bs=[
+        csr_matrix([[.1,0],[0,-.2j]],dtype=complex),
+        csr_matrix([[0,.15j],[.08,0]],dtype=complex),
+    ]
+    shared=adjoint_trajectory(A,x,c,T=1.8,samples=101)
+    for B in Bs:
+        val=contract_sensitivity(B,shared)
+        fd=fixed_initial_fd(A+1e-5*B,A-1e-5*B,x,c,1.8,1e-5)
+        assert abs(val-fd)<2e-8
