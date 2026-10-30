@@ -23,7 +23,7 @@ from nonmarkovian_neural_dynamics.memory_feedback import (
 )
 
 
-def run(ratio,nk,depth_hi,output,mu_mev=.05):
+def run(ratio,nk,depth_hi,output,mu_mev=.05,horizon=6.,samples=81):
     out=Path(output);out.mkdir(parents=True,exist_ok=True)
     depth_lo=depth_hi-1
     t0=time.perf_counter()
@@ -43,7 +43,7 @@ def run(ratio,nk,depth_hi,output,mu_mev=.05):
     A,B,C,D,omitted=partition_nested(Ahi,Alo,indices)
     c_low=occupation_functional(op,len(low.ados.labels))
     c_hi=occupation_functional(op,len(high.ados.labels))
-    t=np.linspace(0,6,81)
+    t=np.linspace(0,horizon,samples)
     t0=time.perf_counter()
     predicted,diagnostics=first_order_feedback(A,B,C,D,y0lo,c_low,t)
     predictor_s=time.perf_counter()-t0
@@ -54,7 +54,7 @@ def run(ratio,nk,depth_hi,output,mu_mev=.05):
     y0hi=np.zeros(Ahi.shape[0],dtype=complex)
     y0hi[indices]=y0lo
     t0=time.perf_counter()
-    yhi=expm_multiply(Ahi,y0hi,start=0.,stop=6.,num=81,
+    yhi=expm_multiply(Ahi,y0hi,start=0.,stop=horizon,num=samples,
                       traceA=np.sum(Ahi.diagonal()),endpoint=True)
     high_s=time.perf_counter()-t0
     reference=float(np.real(np.vdot(c_hi,yhi[-1])))
@@ -64,7 +64,7 @@ def run(ratio,nk,depth_hi,output,mu_mev=.05):
     corrected_error=abs(reference-predicted_total)
     report={
       "ratio":ratio,"Nk":nk,"low_depth":depth_lo,"high_depth":depth_hi,
-      "post_quench_mu_mev":mu_mev,
+      "post_quench_mu_mev":mu_mev,"horizon_ps":horizon,
       "low_generator_build_seconds":low_generator_s,
       "high_generator_build_seconds":high_generator_s,
       "n_ados_lo":len(low.ados.labels),"n_ados_hi":len(high.ados.labels),
@@ -127,5 +127,7 @@ if __name__=="__main__":
     p.add_argument("--high-depth",type=int,default=3)
     p.add_argument("--output",required=True)
     p.add_argument("--mu",type=float,default=.05)
+    p.add_argument("--horizon",type=float,default=6.)
+    p.add_argument("--samples",type=int,default=81)
     a=p.parse_args()
-    run(a.ratio,a.nk,a.high_depth,a.output,mu_mev=a.mu)
+    run(a.ratio,a.nk,a.high_depth,a.output,mu_mev=a.mu,horizon=a.horizon,samples=a.samples)
