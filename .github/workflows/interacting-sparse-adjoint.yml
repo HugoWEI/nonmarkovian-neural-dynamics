@@ -1,0 +1,70 @@
+name: Interacting sparse HEOM adjoint verification (CPU)
+
+on:
+  push:
+    paths:
+      - "src/nonmarkovian_neural_dynamics/linear_adjoint.py"
+      - "scripts/interacting_sparse_adjoint.py"
+      - "tests/test_linear_adjoint.py"
+      - ".github/workflows/interacting-sparse-adjoint.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  gradient-check:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ratio: "3.0"
+            depth: 2
+            label: high-d2
+          - ratio: "0.3"
+            depth: 2
+            label: low-d2
+          - ratio: "0.3"
+            depth: 3
+            label: low-d3
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install numerical physics dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Test complex nonnormal sparse adjoint independently of QuTiP
+        run: python -m pytest -q tests/test_linear_adjoint.py
+      - name: Check interacting correlated-state HEOM sensitivities
+        run: |
+          timeout --signal=TERM --kill-after=20s 420s python scripts/interacting_sparse_adjoint.py \
+            --ratio ${{ matrix.ratio }} --nk 3 --depth ${{ matrix.depth }} --samples 81 \
+            --output outputs/interacting_adjoint/${{ matrix.label }}
+      - name: Report measured sensitivities and FD error
+        if: success()
+        run: cat outputs/interacting_adjoint/${{ matrix.label }}/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: interacting-adjoint-${{ matrix.label }}
+          path: outputs/interacting_adjoint/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Report run ID for direct connector review
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 5 --body "Interacting sparse adjoint ${{ matrix.label }}: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; result **${RESULT}**; commit \`${GITHUB_SHA}\`."
