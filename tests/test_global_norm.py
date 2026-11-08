@@ -1,4 +1,7 @@
 """Check that physical norm-penalty and parametrized loss execute."""
+import pytest
+
+pytest.importorskip("torch")
 import numpy as np
 from scripts.reduced_fermionic_pinn import train
 
