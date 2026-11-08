@@ -1,0 +1,52 @@
+name: Source-Padé low-T correlated HEOM depth 2 (resource-limited)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - ".github/workflows/heom-source-low-depth2.yml"
+      - "scripts/heom_correlated_quench.py"
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  source-order-low-temperature:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Run source Nk=7 depth 2 with 4-minute cap
+        run: |
+          timeout --signal=TERM --kill-after=20s 240s python scripts/heom_correlated_quench.py \
+            --ratio 0.3 --nk 7 --depth 2 \
+            --output outputs/source_low_nk7_depth2
+      - name: Show physicality result
+        if: success()
+        run: cat outputs/source_low_nk7_depth2/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-low-nk7-depth2
+          path: outputs/source_low_nk7_depth2/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Expose run ID for connected log inspection
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 3 --body "Source low Nk7 depth2: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; job result **${RESULT}**; commit \`${GITHUB_SHA}\`."

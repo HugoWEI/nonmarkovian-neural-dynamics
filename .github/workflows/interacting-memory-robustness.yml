@@ -1,0 +1,82 @@
+name: Interacting omitted-tier memory correction voltage-robustness (CPU)
+
+on:
+  push:
+    paths:
+      - ".github/workflows/interacting-memory-robustness.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  voltage-sweep:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ratio: "3.0"
+            nk: 3
+            mu: "0.025"
+            label: high-mu025
+          - ratio: "3.0"
+            nk: 3
+            mu: "0.10"
+            label: high-mu100
+          - ratio: "3.0"
+            nk: 3
+            mu: "0.20"
+            label: high-mu200
+          - ratio: "0.3"
+            nk: 7
+            mu: "0.025"
+            label: low-mu025
+          - ratio: "0.3"
+            nk: 7
+            mu: "0.10"
+            label: low-mu100
+          - ratio: "0.3"
+            nk: 7
+            mu: "0.20"
+            label: low-mu200
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install QuTiP sparse HEOM
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Verify block Volterra approximation
+        run: python -m pytest -q tests/test_memory_feedback.py
+      - name: Validate correction at a prespecified held-out quench strength
+        run: |
+          timeout --signal=TERM --kill-after=20s 360s python scripts/interacting_memory_correction.py \
+            --ratio ${{ matrix.ratio }} --nk ${{ matrix.nk }} --high-depth 3 --mu ${{ matrix.mu }} \
+            --output outputs/memory_parameter_sweep/${{ matrix.label }}
+      - name: Report accuracy and complete CPU cost
+        if: success()
+        run: cat outputs/memory_parameter_sweep/${{ matrix.label }}/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: memory-robustness-${{ matrix.label }}
+          path: outputs/memory_parameter_sweep/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Track run ID and outcome
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 5 --body "Memory voltage robustness ${{ matrix.label }}: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; result **${RESULT}**; commit \`${GITHUB_SHA}\`."

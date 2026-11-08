@@ -1,0 +1,36 @@
+name: Anderson PINN four-seed comparison (CPU)
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "scripts/finite_anderson_seed_comparison.py"
+      - ".github/workflows/anderson-seeds.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  compare-seeds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m pip install -e '.[dev]'
+      - run: python -m pip install torch --index-url https://download.pytorch.org/whl/cpu
+      - name: Run four initializations
+        run: python scripts/finite_anderson_seed_comparison.py --steps 3000
+      - name: Publish summary
+        if: success()
+        run: cat outputs/anderson_seeds/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Save data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: finite-anderson-four-seeds
+          path: outputs/anderson_seeds/
+          retention-days: 30
+          if-no-files-found: warn

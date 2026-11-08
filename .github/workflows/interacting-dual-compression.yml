@@ -1,0 +1,69 @@
+name: Compressed interacting HEOM dual sensitivity (CPU)
+
+on:
+  push:
+    paths:
+      - "src/nonmarkovian_neural_dynamics/dual_compression.py"
+      - "scripts/interacting_dual_compression.py"
+      - "tests/test_dual_compression.py"
+      - ".github/workflows/interacting-dual-compression.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  compression:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - ratio: "0.3"
+            nk: 3
+            depth: 3
+            label: low-nk3
+          - ratio: "0.3"
+            nk: 7
+            depth: 3
+            label: low-nk7
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    env:
+      OPENBLAS_NUM_THREADS: "1"
+      OMP_NUM_THREADS: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install numerical HEOM dependencies
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'qutip>=5.2,<6'
+      - name: Validate discrete-quadrature dual compression bounds
+        run: python -m pytest -q tests/test_dual_compression.py tests/test_linear_adjoint.py
+      - name: Test approximate dual ranks against interacting HEOM adjoint
+        run: |
+          timeout --signal=TERM --kill-after=20s 420s python scripts/interacting_dual_compression.py \
+            --ratio ${{ matrix.ratio }} --nk ${{ matrix.nk }} --depth ${{ matrix.depth }} \
+            --output outputs/dual_compression/${{ matrix.label }}
+      - name: Show observed sensitivity errors and mathematical bounds
+        if: success()
+        run: cat outputs/dual_compression/${{ matrix.label }}/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: compressed-dual-${{ matrix.label }}
+          path: outputs/dual_compression/
+          retention-days: 30
+          if-no-files-found: warn
+      - name: Post run ID for review
+        if: always()
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RESULT: ${{ job.status }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh issue comment 5 --body "HEOM POD dual ${{ matrix.label }}: [run #${GITHUB_RUN_NUMBER}](${RUN_URL}); run ID \`${GITHUB_RUN_ID}\`; result **${RESULT}**; commit \`${GITHUB_SHA}\`."
