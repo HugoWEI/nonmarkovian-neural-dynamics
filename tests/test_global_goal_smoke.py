@@ -1,4 +1,7 @@
 """Regression test for global-terminal PINN objective variants."""
+import pytest
+
+pytest.importorskip("torch")
 import numpy as np
 from scripts.reduced_fermionic_pinn import train
 

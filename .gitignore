@@ -12,3 +12,4 @@ checkpoints/
 *.pth
 *.h5
 .DS_Store
+results/figures/*.png

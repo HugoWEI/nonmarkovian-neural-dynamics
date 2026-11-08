@@ -2,7 +2,23 @@
 
 Exploratory research on goal-oriented deep learning for strongly non-Markovian open quantum systems.
 
-**Status:** Initial mathematical checks only. No new deep-learning improvement or research novelty has yet been demonstrated.
+**Status (Nov 8, 2026):** Converged low-temperature reference established for the interacting non-Markovian quench, enabled by exact elimination of the deepest hierarchy tier. No new deep-learning method is claimed.
+
+## Headline result — converged low-temperature reference via exact tier elimination
+
+![Hierarchy convergence and steady-state cost](results/figures/tier_elimination_convergence.svg)
+
+Spinful interacting Anderson impurity (U = 1 meV), one Lorentzian lead per spin, fully correlated stationary hierarchy, chemical-potential quench, 6 ps.
+
+- **Exact speed-up of the bottleneck.** The deepest HEOM tier couples to nothing below it, so its generator block is diagonal and can be eliminated exactly (a Schur complement). The correlated stationary state then needs only a smaller linear solve: identical to QuTiP's direct solve to ≤ 3e-13, **163× faster** at source order (75 s → 0.46 s), and feasible where the direct solve runs out of memory.
+- **Converged reference.** At T/Γ = 0.3 and source Padé order Nk = 7, depth 4 (41,449 ADOs, 663,184 unknowns): ⟨n↑⟩(6 ps) = **0.503618 ± ~1e-5**. Successive depths change the result by 1.6e-3 → 1.6e-4 (→ 2.4e-6 at depth 5 for Nk = 3); Padé order Nk 7 → 9 changes it by 7.4e-6.
+- **Finding.** At low temperature, Nk = 3 Padé terms are inadequate (1.6e-3 error, as large as the depth-2 truncation error).
+
+Details, tables and limitations: [results/2026-11-08-tier-elimination-converged-reference.md](results/2026-11-08-tier-elimination-converged-reference.md). Reproduce: `pip install -e '.[research]' && python scripts/tier_elimination_convergence.py && python scripts/plot_tier_elimination.py` (~6 min, 2 cores, ≤ 4.5 GB).
+
+The method is standard Gaussian elimination, related to HEOM terminator schemes; the contribution is its verified use to obtain a converged benchmark. Everything below documents the earlier exploratory phases, including negative results.
+
+---
 
 ## Hypothesis
 

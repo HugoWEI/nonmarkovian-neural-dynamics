@@ -1,4 +1,7 @@
 """Train each neural objective briefly to catch runtime/shape regressions."""
+import pytest
+
+pytest.importorskip("torch")
 import numpy as np
 from scripts.reduced_fermionic_pinn import train
 

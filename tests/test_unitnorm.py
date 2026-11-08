@@ -1,4 +1,7 @@
 """Hard-normalization wavefunction outputs must remain norm 1."""
+import pytest
+
+pytest.importorskip("torch")
 from scripts.reduced_fermionic_pinn import train
 
 def test_unit_norm_exact_up_to_roundoff():
