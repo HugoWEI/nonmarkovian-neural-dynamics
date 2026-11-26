@@ -1,0 +1,27 @@
+{
+ "note": "Transcribed from the console output of runs on Hugo's laptop (Windows 11, x64, 31.7 GB RAM), 26-27 Nov 2026. Model: spinful Anderson impurity, U=1 meV, eps=-0.5 meV, one Lorentzian lead per spin (Gamma=0.1 meV, W=5 meV), T/Gamma=0.3, mu=0.05 meV, Pade expansion with Nk poles. Times in seconds.",
+ "qutip_direct_vs_elimination_direct": [
+  {"Nk": 3, "depth": 3, "unknowns": 11152,  "qutip_direct_s": 0.765,  "elimination_direct_s": 0.021, "max_abs_diff": 3.2e-14},
+  {"Nk": 3, "depth": 4, "unknowns": 40272,  "qutip_direct_s": 37.262, "elimination_direct_s": 2.533, "max_abs_diff": 3.1e-14},
+  {"Nk": 7, "depth": 3, "unknowns": 87824,  "qutip_direct_s": 181.93, "elimination_direct_s": 2.257, "max_abs_diff": 1.9e-13},
+  {"Nk": 5, "depth": 4, "unknowns": 207216, "qutip_direct_s": "not finished after ~25 min (stopped)", "elimination_direct_s": 35.953, "n_up": 0.5038535958626161}
+ ],
+ "hierarchicaleom_default_steadystate_vs_elimination_direct": [
+  {"Nk": 3, "depth": 3, "unknowns": 11152,  "julia_steadystate_s": 0.782, "elimination_direct_s": 0.031},
+  {"Nk": 3, "depth": 4, "unknowns": 40272,  "julia_steadystate_s": 1.166, "elimination_direct_s": 0.249},
+  {"Nk": 7, "depth": 3, "unknowns": 87824,  "julia_steadystate_s": 1.734, "elimination_direct_s": 0.254},
+  {"Nk": 5, "depth": 4, "unknowns": 207216, "julia_steadystate_s": 3.001, "elimination_direct_s": 2.133},
+  {"Nk": 7, "depth": 4, "unknowns": 663184, "julia_steadystate_s": 9.418, "elimination_direct_s": 12.068, "n_up_elimination": 0.503904980865057, "n_up_julia": 0.5039049808573844, "n_up_qutip_reference": 0.5039049808651289}
+ ],
+ "gmres_same_settings": {
+  "settings": "Krylov.gmres rtol=1e-12, atol=1e-14 (HierarchicalEOM.jl default steadystate settings); Nk=7 depth=5 used restart=100 for both variants",
+  "cases": [
+   {"Nk": 3, "depth": 3, "unknowns_full": 11152,   "unknowns_eliminated": 2192,   "full_s": 0.786,  "full_iters": 136, "eliminated_mf_s": 0.012,  "eliminated_mf_iters": 75,  "full_err": 1.07e-11, "eliminated_err": 2.08e-13, "note": "full_s likely includes one-off start-up cost"},
+   {"Nk": 7, "depth": 3, "unknowns_full": 87824,   "unknowns_eliminated": 8464,   "full_s": 1.742,  "full_iters": 165, "eliminated_mf_s": 0.104,  "eliminated_mf_iters": 107, "full_err": 7.09e-12, "eliminated_err": 5.81e-12},
+   {"Nk": 5, "depth": 4, "unknowns_full": 207216,  "unknowns_eliminated": 37200,  "full_s": 2.942,  "full_iters": 166, "eliminated_mf_s": 1.34,   "eliminated_mf_iters": 144, "full_err": 7.93e-12, "eliminated_err": 6.69e-12},
+   {"Nk": 7, "depth": 4, "unknowns_full": 663184,  "unknowns_eliminated": 87824,  "full_s": 9.087,  "full_iters": 177, "eliminated_mf_s": 2.606,  "eliminated_mf_iters": 155, "full_err": 7.74e-12, "eliminated_err": 8.73e-12},
+   {"Nk": 5, "depth": 5, "unknowns_full": 887280,  "unknowns_eliminated": 207216, "full_s": 13.749, "full_iters": 184, "eliminated_mf_s": 4.538,  "eliminated_mf_iters": 165, "full_vs_eliminated_diff": 1.77e-12, "peak_memory_gb": 4.8},
+   {"Nk": 7, "depth": 5, "unknowns_full": 3885200, "unknowns_eliminated": 663184, "full_s": 99.361, "full_iters": 288, "eliminated_mf_s": 22.689, "eliminated_mf_iters": 255, "full_vs_eliminated_diff": 1.09e-12, "n_up_full": 0.503909081461706, "n_up_eliminated": 0.5039090814628006, "peak_memory_gb": 10.91}
+  ]
+ }
+}
