@@ -1,22 +1,27 @@
-# Error-Backflow-Aware Neural Dynamics
+# Non-Markovian Neural Dynamics
 
-Exploratory research on goal-oriented deep learning for strongly non-Markovian open quantum systems.
+Trustworthy, fast solvers for open quantum systems with memory, built in four steps:
 
-**Status (Nov 8, 2026):** Converged low-temperature reference established for the interacting non-Markovian quench, enabled by exact elimination of the deepest hierarchy tier. No new deep-learning method is claimed.
+1. **Reference:** converged answers where the exact method (HEOM) still runs. *Done for a low-temperature Anderson-impurity quench.*
+2. **Speed:** make the exact method cheaper without approximation. *Done: exact deepest-tier elimination, benchmarked against current HEOM software (below).*
+3. **Benchmark:** grade cheaper solvers (shallow hierarchies, few Padé poles, neural solvers) against the reference. *Next.*
+4. **Scale:** use what passes where exact HEOM cannot go.
 
-## Headline result — converged low-temperature reference via exact tier elimination
+**Status (Nov 27, 2026):** steps 1 and 2 done. No new deep-learning method is claimed yet.
 
-![Hierarchy convergence and steady-state cost](results/figures/tier_elimination_convergence.svg)
+## Headline result: exact elimination speeds up HEOM steady states, including against HierarchicalEOM.jl
 
-Spinful interacting Anderson impurity (U = 1 meV), one Lorentzian lead per spin, fully correlated stationary hierarchy, chemical-potential quench, 6 ps.
+![Speed comparison](benchmarks/heom_steady_state/results/speed_comparison.svg)
 
-- **Exact speed-up of the bottleneck.** The deepest HEOM tier couples to nothing below it, so its generator block is diagonal and can be eliminated exactly (a Schur complement). The correlated stationary state then needs only a smaller linear solve: identical to QuTiP's direct solve to ≤ 3e-13, **163× faster** at source order (75 s → 0.46 s), and feasible where the direct solve runs out of memory.
-- **Converged reference.** At T/Γ = 0.3 and source Padé order Nk = 7, depth 4 (41,449 ADOs, 663,184 unknowns): ⟨n↑⟩(6 ps) = **0.503618 ± ~1e-5**. Successive depths change the result by 1.6e-3 → 1.6e-4 (→ 2.4e-6 at depth 5 for Nk = 3); Padé order Nk 7 → 9 changes it by 7.4e-6.
-- **Finding.** At low temperature, Nk = 3 Padé terms are inadequate (1.6e-3 error, as large as the depth-2 truncation error).
+The deepest tier of a truncated HEOM couples to nothing below it, so its generator block is diagonal for this model and can be eliminated exactly (a Schur complement). That tier holds most of the hierarchy, so the remaining system is 4 to 10 times smaller.
 
-Details, tables and limitations: [results/2026-11-08-tier-elimination-converged-reference.md](results/2026-11-08-tier-elimination-converged-reference.md). Reproduce: `pip install -e '.[research]' && python scripts/tier_elimination_convergence.py && python scripts/plot_tier_elimination.py` (~6 min, 2 cores, ≤ 4.5 GB).
+- **Against QuTiP's direct solve:** identical to ≤ 3×10⁻¹³ and up to 160 times faster; on a laptop, a case QuTiP had not finished after 25 minutes takes 36 s.
+- **Against HierarchicalEOM.jl's default steady-state solver (GMRES), with the same GMRES and tolerances:** 2 to 17 times faster at equal accuracy, **4.4× at 3.9 million unknowns** (99 s → 23 s, laptop, 31.7 GB), with fewer iterations. The eliminated operator is applied matrix-free, so no fill-in appears.
+- **Converged reference:** at T/Γ = 0.3, Nk = 7, depth 4, ⟨n↑⟩(6 ps) = **0.503618 ± ~1e-5**. Three Padé poles leave an error of 1.6e-3 at this temperature.
 
-The method is standard Gaussian elimination, related to HEOM terminator schemes; the contribution is its verified use to obtain a converged benchmark. Everything below documents the earlier exploratory phases, including negative results.
+Write-up: [`paper/main.pdf`](paper/main.pdf). Benchmark scripts (Python + Julia), raw results and plot: [`benchmarks/heom_steady_state/`](benchmarks/heom_steady_state/). Earlier convergence details: [results/2026-11-08-tier-elimination-converged-reference.md](results/2026-11-08-tier-elimination-converged-reference.md).
+
+**Scope:** one model, one laptop, the package's default solver settings. The method is standard Gaussian elimination, related to HEOM terminators; the contribution is its verified use and the benchmark. Everything below documents earlier exploratory phases, including negative results.
 
 ---
 
