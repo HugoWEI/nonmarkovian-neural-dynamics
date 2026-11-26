@@ -1,0 +1,40 @@
+name: Background CPU research sweep
+
+on:
+  push:
+    paths:
+      - "scripts/sweep_memory.py"
+      - ".github/workflows/background-sweep.yml"
+      - "src/nonmarkovian_neural_dynamics/**"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sensitivity-sweep:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install CPU dependencies
+        run: python -m pip install -e .
+      - name: Run sensitivity sweep
+        run: python scripts/sweep_memory.py
+      - name: Publish summary
+        if: success()
+        run: cat outputs/toy_sweep/SUMMARY.md >> "$GITHUB_STEP_SUMMARY"
+      - name: Upload data artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: toy-memory-sweep
+          path: outputs/toy_sweep/
+          if-no-files-found: warn
+          retention-days: 14
