@@ -27,9 +27,10 @@ hierarchical equations of motion}
 
 \begin{abstract}
 \noindent
-The stationary state of the hierarchical equations of motion (HEOM) is the
-starting point of every quench from a correlated system--bath state and the
-whole calculation for steady-state transport, yet it requires solving a linear
+The stationary solution of the hierarchical equations of motion (HEOM)
+provides the initial condition for quenches from correlated system--bath
+equilibrium and is the whole calculation for steady-state transport, yet it
+requires solving a linear
 system whose size grows combinatorially with hierarchy depth. We point out that
 in a truncated hierarchy the deepest tier is coupled only to the tier above it,
 so that its generator block is block diagonal and, for impurity Hamiltonians
@@ -76,7 +77,7 @@ spectrally to the full HEOM~\cite{Vadimov2026}.
 
 This paper concerns a narrower but frequent task: computing the stationary
 state of a hierarchy that has already been truncated at depth $n$. This state
-is the initial condition of any quench from a correlated system--bath
+provides the initial condition for quenches from correlated system--bath
 equilibrium, and for steady-state transport it is the entire calculation. We
 make three contributions.
 \begin{enumerate}
@@ -90,7 +91,7 @@ make three contributions.
   tolerances for both sides of the latter comparison, up to
   $3.9\times10^{6}$ unknowns (Sec.~\ref{sec:bench}).
 \item We use the exact variant to produce a converged low-temperature reference
-  for a correlated quench of the Anderson impurity model, with an explicit error
+  for a quench of the Anderson impurity model from correlated equilibrium, with an explicit error
   budget, intended as a test case for approximate and neural solvers
   (Sec.~\ref{sec:reference}).
 \end{enumerate}
@@ -146,8 +147,9 @@ In the quench protocol, the stationary hierarchy at $\mu = 0$ is propagated afte
 the lead chemical potential is switched to $\mu = 0.05$\,meV, and
 $\langle n_\uparrow\rangle(t)$ is recorded over 6\,ps with an explicit DOP853
 integrator ($\mathrm{rtol} = 10^{-10}$, $\mathrm{atol} = 10^{-12}$). Starting from
-the correlated stationary hierarchy, rather than from a product state, retains
-the system--bath correlations present before the quench.
+the stationary hierarchy, which describes the correlated system--bath
+equilibrium, rather than from a product state, retains the system--bath
+correlations present before the quench.
 
 \section{Exact elimination of the deepest tier}\label{sec:method}
 
