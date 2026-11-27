@@ -122,3 +122,69 @@ def split_generator(L, retained, omitted):
     L = sp.csr_matrix(L)
     return (L[retained][:, retained], L[retained][:, omitted],
             L[omitted][:, retained], L[omitted][:, omitted])
+
+
+def steady_state(solver, method: str = "direct", rtol: float = 1e-12,
+                 atol: float = 1e-14, restart: int = 200, maxiter: int | None = None):
+    """Stationary state of a QuTiP ``HEOMSolver`` via exact deepest-tier elimination.
+
+    Drop-in alternative to ``solver.steady_state()``.
+
+    Parameters
+    ----------
+    solver : qutip.solver.heom.HEOMSolver
+        A time-independent HEOM solver (bosonic or fermionic baths).
+    method : {"direct", "gmres"}
+        ``"direct"`` factorises the reduced system (exact to machine precision).
+        ``"gmres"`` applies the reduced operator matrix-free,
+        S x = A x - B (D^-1 (C x)), and solves with GMRES; faster for large
+        hierarchies, accurate to ``rtol``.
+    rtol, atol, restart, maxiter : GMRES settings (``method="gmres"`` only).
+
+    Returns
+    -------
+    rho : qutip.Qobj
+        The stationary reduced density matrix.
+    ados : numpy.ndarray
+        The full stationary hierarchy (all ADOs, QuTiP's ordering), so it can be
+        used directly as the initial state of a quench.
+    """
+    from qutip import Qobj
+    from scipy.sparse.linalg import LinearOperator, gmres
+
+    L = solver.rhs(0.0).data.as_scipy().tocsr().astype(np.complex128)
+    labels = list(solver.ados.labels)
+    dim = int(solver._sys_shape)
+    block = dim * dim
+    if L.shape[0] != len(labels) * block:
+        raise ValueError("unexpected HEOM generator size")
+    retained, omitted = deepest_tier_split(labels, block)
+    A, B, C, D = split_generator(L, retained, omitted)
+
+    if method == "direct":
+        y, _ = eliminated_steady_state(A, B, C, D, retained, omitted, dim)
+    elif method == "gmres":
+        Dinv = block_inverse(D, block)
+        C = sp.csr_matrix(C); B = sp.csr_matrix(B); A = sp.csr_matrix(A)
+        t = trace_row(A.shape[0], dim)
+        nz = np.flatnonzero(t)
+
+        def matvec(x):
+            out = A @ x - B @ (Dinv @ (C @ x))
+            out[0] += x[nz].sum()          # trace condition added to row 0
+            return out
+
+        S = LinearOperator(A.shape, matvec=matvec, dtype=np.complex128)
+        rhs = np.zeros(A.shape[0], dtype=np.complex128); rhs[0] = 1.0
+        x, info = gmres(S, rhs, rtol=rtol, atol=atol, restart=restart, maxiter=maxiter)
+        if info != 0:
+            raise RuntimeError(f"GMRES did not converge (info={info})")
+        y = np.zeros(L.shape[0], dtype=np.complex128)
+        y[retained] = x
+        y[omitted] = -(Dinv @ (C @ x))
+    else:
+        raise ValueError("method must be 'direct' or 'gmres'")
+
+    rho = y[:block].reshape(dim, dim)
+    rho = Qobj(0.5 * (rho + rho.conj().T), dims=solver._sys_dims)
+    return rho, y
