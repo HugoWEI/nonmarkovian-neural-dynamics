@@ -29,9 +29,8 @@ hierarchical equations of motion}
 \noindent
 The stationary solution of the hierarchical equations of motion (HEOM)
 provides the initial condition for quenches from correlated system--bath
-equilibrium and is the whole calculation for steady-state transport, yet it
-requires solving a linear
-system whose size grows combinatorially with hierarchy depth. We point out that
+equilibrium and is the central computational task in steady-state transport
+calculations, yet it requires solving a linear system whose size grows combinatorially with hierarchy depth. We point out that
 in a truncated hierarchy the deepest tier is coupled only to the tier above it,
 so that its generator block is block diagonal and, for impurity Hamiltonians
 diagonal in the occupation basis, exactly diagonal. At stationarity this tier
@@ -78,8 +77,11 @@ spectrally to the full HEOM~\cite{Vadimov2026}.
 This paper concerns a narrower but frequent task: computing the stationary
 state of a hierarchy that has already been truncated at depth $n$. This state
 provides the initial condition for quenches from correlated system--bath
-equilibrium, and for steady-state transport it is the entire calculation. We
-make three contributions.
+equilibrium, and in steady-state transport calculations it is the central
+computational task, from which currents and other observables are then read
+off. The benchmarks below use one reservoir per spin rather than a two-lead
+transport geometry; transport is an application we expect, not one we
+demonstrate. We make three contributions.
 \begin{enumerate}
 \item We show that the deepest tier can be eliminated from the stationary
   problem \emph{exactly}: no terminator approximation is involved, because its
@@ -429,9 +431,10 @@ ADO, a split of the generator into four blocks, and a diagonal (or $d^2\times
 d^2$ block-diagonal) inversion. It combines with, rather than replaces, the
 approaches cited in the introduction. Better bath decompositions lower $K$ and
 leave the deepest tier dominant whenever $K \gg n$. Importance-based pruning and
-preconditioning act on the remaining system, and steady-state transport
-calculations in a two-lead geometry, where the stationary solve is the whole
-computation, are an immediate application.
+preconditioning act on the remaining system. Steady-state transport
+calculations in a two-lead geometry, where the stationary solve is the
+dominant cost, are a natural next application; we have not benchmarked them
+here.
 
 The study has clear limits. It covers one model, a single-orbital impurity with
 one lead per spin, and the benchmark against HierarchicalEOM.jl uses that
