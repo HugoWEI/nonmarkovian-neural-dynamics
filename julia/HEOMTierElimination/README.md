@@ -22,6 +22,16 @@ ados = steadystate_eliminated(M; method = :direct)   # exact LU, small/medium si
 ρ = getRho(ados)
 ```
 
+[`examples/quickstart.jl`](examples/quickstart.jl) (Anderson impurity, 207,216 unknowns, laptop):
+
+```
+eliminated 10626 of 12951 ADOs; solving 37200 instead of 207216 unknowns
+HierarchicalEOM steadystate : <n_up> = 0.5038535958546795  (3.09 s)
+steadystate_eliminated      : <n_up> = 0.5038535958692973  (1.41 s)
+```
+
+Both agree with the exact value (0.5038535958626) to within 10⁻¹¹.
+
 Options: `rtol = 1e-12`, `atol = 1e-14` (same defaults as `steadystate`), `restart = 0` (set e.g. `100` to bound GMRES memory on very large hierarchies), `verbose = false`.
 
 ## Why it is faster
