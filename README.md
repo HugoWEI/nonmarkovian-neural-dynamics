@@ -2,7 +2,7 @@
 
 Fast, exact steady states for the hierarchical equations of motion (HEOM).
 
-In a truncated HEOM hierarchy, the deepest tier holds most of the auxiliary density operators (ADOs), and at stationarity it can be eliminated **exactly** by a Schur complement. The remaining system is 4 to 10 times smaller. This package does that in one call on any QuTiP `HEOMSolver`.
+In a truncated HEOM hierarchy, the deepest tier holds most of the auxiliary density operators (ADOs), and at stationarity it can be eliminated **exactly** by a Schur complement. The remaining system is 3.6 to 10.4 times smaller in our benchmarks. This package does that in one call on any QuTiP `HEOMSolver`.
 
 ## Install
 

@@ -31,16 +31,16 @@ The stationary solution of the hierarchical equations of motion (HEOM)
 provides the initial condition for quenches from correlated system--bath
 equilibrium and is the central computational task in steady-state transport
 calculations, yet it requires solving a linear system whose size grows combinatorially with hierarchy depth. We point out that
-in a truncated hierarchy the deepest tier is coupled only to the tier above it,
-so that its generator block is block diagonal and, for impurity Hamiltonians
-diagonal in the occupation basis, exactly diagonal. At stationarity this tier
+in a truncated hierarchy the deepest-tier ADOs couple only to the preceding
+tier, so the corresponding submatrix of the generator is block diagonal and,
+for impurity Hamiltonians diagonal in the occupation basis, itself diagonal. At stationarity this tier
 can therefore be removed by a Schur complement without any approximation. For
 fermionic baths the deepest tier holds between 72\% and 90\% of all auxiliary
-density operators in the cases studied here, so the reduced system is 4 to 10
-times smaller. For a spinful Anderson impurity with Lorentzian leads at
-$T/\Gamma = 0.3$, the reduction reproduces direct solutions to
-$\leq 3\times10^{-13}$ and is up to 160 times faster than the QuTiP direct
-solver. Applied matrix-free with the same Krylov solver and tolerances, it
+density operators (ADOs) in the cases studied here, so the number of unknowns
+in the stationary linear system is reduced by a factor of 3.6 to 10.4. For a spinful Anderson impurity with Lorentzian leads at
+$T/\Gamma = 0.3$, the reconstructed stationary solutions agree with QuTiP's
+direct solver to within $3\times10^{-13}$ in the maximum norm, while reducing
+the solve time by up to a factor of 160. Applied matrix-free with the same Krylov solver and tolerances, it
 accelerates the default steady-state solver of HierarchicalEOM.jl by factors of
 2.2 to 16.8 at equal accuracy, including a factor of 4.4 at $3.9\times10^{6}$
 unknowns on a laptop. We use the exact variant to obtain a low-temperature
@@ -110,7 +110,8 @@ H_S = \varepsilon \sum_{\sigma} n_\sigma + U n_\uparrow n_\downarrow ,
 so that $\varepsilon = -U/2$ and the model is particle--hole symmetric at zero
 chemical potential. Each spin is coupled to one fermionic lead with a Lorentzian
 hybridisation of width $\Gamma = 0.1$\,meV and bandwidth $W = 5$\,meV. The system
-Hilbert space has dimension $d = 4$.
+Hilbert space has dimension $d = 4$. We use $k_B = 1$, so temperatures are quoted
+as energies ($T/\Gamma$), and times follow from $\hbar = 0.658211928$\,meV\,ps.
 
 The lead correlation functions are expanded as
 \begin{equation}
@@ -207,7 +208,7 @@ regime of low temperature, the deepest tier therefore holds most of the
 hierarchy. Table~\ref{tab:count} lists the counts for the cases used below; the
 predicted sizes match those of the generators built by both packages exactly.
 Eliminating the deepest tier shrinks the stationary system by a factor
-$\sum_{k\le n}\binom{K}{k} \big/ \sum_{k<n}\binom{K}{k}$, between 4 and 10 here.
+$\sum_{k\le n}\binom{K}{k} \big/ \sum_{k<n}\binom{K}{k}$, between 3.6 and 10.4 here.
 
 \begin{table}[h]
 \centering\small
@@ -242,7 +243,7 @@ Sx = Ax - B\big(D^{-1}(Cx)\big).
 \end{equation}
 One such product costs about as much as one product with $\Lc$, since $A$, $B$ and
 $C$ are sub-blocks of $\Lc$ and $D^{-1}$ is diagonal. The vectors on which the
-Krylov method operates are, however, 4 to 10 times shorter. In GMRES the
+Krylov method operates are, however, 3.6 to 10.4 times shorter. In GMRES the
 orthogonalisation of each new vector against the previous ones costs
 $\mathcal{O}(jN)$ at iteration $j$ for vectors of length $N$, and for the
 hierarchies considered here, with $\mathcal{O}(10^2)$ iterations and roughly ten
@@ -254,8 +255,15 @@ addition that GMRES needs fewer iterations on the reduced system
 
 \section{Benchmarks}\label{sec:bench}
 
-All stationary states in this section are computed for $T/\Gamma = 0.3$; times
-exclude the construction of the generator, which both methods share.
+All stationary states in this section are computed for $T/\Gamma = 0.3$ and
+$\mu = 0.05$\,meV, away from the particle--hole symmetric point at which the
+occupation is trivially $0.5$. Reported times are single wall-clock
+measurements and exclude the construction of the generator, which all methods
+share; the Julia scripts run an untimed warm-up first, so compilation is
+excluded. Unless stated otherwise, times for the reduced system cover the solve
+only, excluding the extraction of the blocks $A$, $B$, $C$, $D$ and the
+reconstruction of the deepest tier; end-to-end timings are reported where
+indicated.
 
 \subsection{Comparison with the QuTiP direct solver}
 
@@ -450,7 +458,7 @@ from $N_k = 3$; a direct $N_k = 7$, depth-5 propagation was not performed.
 In a truncated hierarchy, the deepest tier is the largest and the simplest:
 it contains most of the ADOs, and its generator block is local. At
 stationarity it can be removed exactly. Doing so reduces the stationary system
-4- to 10-fold for the low-temperature Anderson model studied here, accelerates
+3.6- to 10.4-fold for the low-temperature Anderson model studied here, accelerates
 both direct and Krylov solves, and enabled a converged reference that will
 serve to grade cheaper solvers, including neural ones, in the regime where
 memory effects are strongest.
