@@ -32,6 +32,15 @@ elimination, direct: <n_up> = 0.501962538799   (0.46 s)
 elimination, gmres : <n_up> = 0.501962538804   (0.37 s)
 ```
 
+## Julia (HierarchicalEOM.jl)
+
+The same method for HierarchicalEOM.jl models lives in [`julia/HEOMTierElimination`](julia/HEOMTierElimination):
+
+```julia
+using HierarchicalEOM, HEOMTierElimination
+ados = steadystate_eliminated(M)    # drop-in for steadystate(M)
+```
+
 ## Results
 
 ![Speed comparison](benchmarks/heom_steady_state/results/speed_comparison.svg)
@@ -59,6 +68,7 @@ is a smaller system with the same solution. The `gmres` method never builds this
 | Path | Contents |
 |---|---|
 | `src/nonmarkovian_neural_dynamics/tier_elimination.py` | The method and the `steady_state` API |
+| `julia/HEOMTierElimination/` | Julia package for HierarchicalEOM.jl models |
 | `examples/` | Runnable examples |
 | `benchmarks/heom_steady_state/` | QuTiP and HierarchicalEOM.jl benchmarks, raw results, plot |
 | `paper/` | Write-up (LaTeX and PDF) |
