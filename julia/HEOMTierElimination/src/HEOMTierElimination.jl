@@ -150,7 +150,9 @@ function steadystate_eliminated(M::HierarchicalEOM.AbstractHEOMLSMatrix; method:
     y = zeros(ComplexF64, n)
     y[keep] = x
     y[last] = -(Dinv * (C * x))
-    return ADOs(y, M.N, M.parity)
+    # keep the system's tensor structure (e.g. two spins = [2, 2], not [4])
+    return hasproperty(M, :dimensions) ? ADOs(y, M.dimensions.to, M.N, M.parity) :
+                                         ADOs(y, M.N, M.parity)
 end
 
 end # module
