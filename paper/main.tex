@@ -1,248 +1,355 @@
 \documentclass[11pt,a4paper]{article}
-\usepackage[margin=2.3cm]{geometry}
+\usepackage[margin=2.4cm]{geometry}
 \usepackage[T1]{fontenc}
 \usepackage{lmodern}
-\usepackage{amsmath,amssymb,bm}
+\usepackage{microtype}
+\usepackage{amsmath,amssymb,amsthm,bm}
 \usepackage{url}
 \usepackage{graphicx}
 \usepackage{booktabs}
 \usepackage[hidelinks]{hyperref}
 \usepackage[font=small,labelfont=bf]{caption}
 
-\newcommand{\tr}{\operatorname{Tr}}
 \newcommand{\Lc}{\mathcal{L}}
+\newcommand{\tr}{\operatorname{Tr}}
+\newtheorem{proposition}{Proposition}
 
-\title{Exact deepest-tier elimination for stationary HEOM:\\
-faster steady states and a converged low-temperature benchmark}
-\author{Hugo Wei\\[2pt]
-\small CentraleSupélec \& ESCP Business School, Paris\\
-\small \texttt{github.com/HugoWEI/nonmarkovian-neural-dynamics}}
+\title{\bfseries Exact deepest-tier elimination for stationary\\
+hierarchical equations of motion}
+\author{Hugo Wei\\[3pt]
+\small CentraleSupélec, Université Paris-Saclay, and ESCP Business School, Paris, France\\
+\small \url{https://github.com/HugoWEI/nonmarkovian-neural-dynamics}}
 \date{November 2026}
 
 \begin{document}
 \maketitle
 
 \begin{abstract}
-Hierarchical equations of motion (HEOM) give numerically exact dynamics for an
-open quantum system coupled to a Gaussian bath, but the hierarchy grows
-combinatorially with depth and with the number of bath exponents. For
-quench protocols that start from the \emph{correlated} system--bath stationary
-state, preparing that state is often the bottleneck. We note that the deepest
-tier of a truncated HEOM is coupled to nothing below it, so its generator block
-is block diagonal (exactly diagonal for an impurity Hamiltonian diagonal in the
-occupation basis) and can be eliminated by a Schur complement without
-approximation. Because the deepest tier holds most of the hierarchy (about 80\%
-of the unknowns in the largest cases here), the remaining system is 4 to 10 times
-smaller. For a spinful interacting Anderson impurity with Lorentzian leads, the
-elimination reproduces QuTiP's direct solve to $\le 3\times10^{-13}$ while being
-up to 160 times faster. Against HierarchicalEOM.jl, whose default steady-state
-solver is GMRES, the same GMRES applied matrix-free to the eliminated system is
-2 to 17 times faster at equal accuracy, and 4.4 times faster (23\,s instead of
-99\,s) at 3.9 million unknowns on a laptop. With the exact variant we obtain a
-benchmark at $T/\Gamma = 0.3$ converged in hierarchy depth and Padé order,
+\noindent
+The stationary state of the hierarchical equations of motion (HEOM) is the
+starting point of every quench from a correlated system--bath state and the
+whole calculation for steady-state transport, yet it requires solving a linear
+system whose size grows combinatorially with hierarchy depth. We point out that
+in a truncated hierarchy the deepest tier is coupled only to the tier above it,
+so that its generator block is block diagonal and, for impurity Hamiltonians
+diagonal in the occupation basis, exactly diagonal. At stationarity this tier
+can therefore be removed by a Schur complement without any approximation. For
+fermionic baths the deepest tier holds between 72\% and 90\% of all auxiliary
+density operators in the cases studied here, so the reduced system is 4 to 10
+times smaller. For a spinful Anderson impurity with Lorentzian leads at
+$T/\Gamma = 0.3$, the reduction reproduces direct solutions to
+$\leq 3\times10^{-13}$ and is up to 160 times faster than the QuTiP direct
+solver. Applied matrix-free with the same Krylov solver and tolerances, it
+accelerates the default steady-state solver of HierarchicalEOM.jl by factors of
+2.2 to 16.8 at equal accuracy, including a factor of 4.4 at $3.9\times10^{6}$
+unknowns on a laptop. We use the exact variant to obtain a low-temperature
+quench reference converged in hierarchy depth and Padé order,
 $\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.50362 \pm 1\times10^{-5}$, and
-show that three Padé poles, as used in earlier low-temperature runs of this project, leave an error of
-$1.6\times10^{-3}$. The elimination itself is standard linear algebra; the
-contribution is its verified use, a benchmark against current HEOM software,
-and a reference against which approximate (e.g.\ neural) solvers can be tested.
+show that three Padé poles leave an error of $1.6\times10^{-3}$ at this
+temperature.
 \end{abstract}
 
-\section{Motivation}
+\section{Introduction}
 
-Non-Markovian open quantum systems---a quantum dot coupled to metallic leads,
-a molecule in a solvent, a qubit near a structured environment---have dynamics
-that depend on their whole history. HEOM~\cite{TanimuraKubo1989,Tanimura2020}
-and its fermionic generalisation~\cite{Jin2008} handle this memory exactly by
-encoding the bath's influence in a hierarchy of auxiliary density operators
-(ADOs). The price is cost: the number of ADOs grows combinatorially with the
-truncation depth and with the number of exponentials used to represent the
-bath correlation function, which itself grows as temperature decreases.
+Open quantum systems whose environment retains a memory of past interactions
+cannot be described by Markovian master equations at low temperature or strong
+coupling. The hierarchical equations of motion (HEOM)~\cite{TanimuraKubo1989,Tanimura2020},
+and their fermionic generalisation~\cite{Jin2008}, treat this memory exactly for
+Gaussian environments by propagating the reduced density matrix together with a
+hierarchy of auxiliary density operators (ADOs). The price is size: the number
+of ADOs grows combinatorially with the truncation depth and with the number of
+exponentials used to represent the bath correlation function, and the latter
+grows as temperature decreases.
 
-Recent work trains neural networks to solve such equations more cheaply. Any
-claim that a neural solver is accurate needs a reference that is converged
-\emph{independently} of the solver being tested. This note produces one for a
-standard test case: an interacting Anderson impurity whose lead chemical
-potential is suddenly shifted, starting from the fully correlated stationary
-state. At low temperature this reference was out of reach on modest hardware,
-because preparing the correlated initial hierarchy required a sparse direct
-solve of a system with up to $6.6\times10^{5}$ unknowns.
+Much recent work aims at reducing this cost. Optimised decompositions of the
+bath correlation function reduce the number of exponentials at low
+temperature~\cite{HuXuYan2010,Xu2022,Dan2023}. Tensor-network representations
+compress the hierarchy itself~\cite{Shi2018,Borrelli2019,Ke2022}.
+HierarchicalEOM.jl discards ADOs below an importance threshold, a controlled
+approximation~\cite{Huang2023}. Neural-network solvers have been proposed and
+benchmarked against exact HEOM~\cite{Cao2025,Cao2026}. Closing the hierarchy
+with a terminator, an approximation to the effect of the discarded tiers, dates
+back to the early HEOM literature~\cite{TanimuraWolynes1991,IshizakiTanimura2005};
+a recent analysis shows that Schur-complement-type terminators converge
+spectrally to the full HEOM~\cite{Vadimov2026}.
 
-\section{Model and hierarchy}
+This paper concerns a narrower but frequent task: computing the stationary
+state of a hierarchy that has already been truncated at depth $n$. This state
+is the initial condition of any quench from a correlated system--bath
+equilibrium, and for steady-state transport it is the entire calculation. We
+make three contributions.
+\begin{enumerate}
+\item We show that the deepest tier can be eliminated from the stationary
+  problem \emph{exactly}: no terminator approximation is involved, because its
+  time derivative vanishes. For the model studied here the eliminated block is
+  exactly diagonal, and the deepest tier contains most of the hierarchy
+  (Sec.~\ref{sec:method}).
+\item We benchmark the reduction against QuTiP~\cite{Lambert2023} and against
+  HierarchicalEOM.jl~\cite{Huang2023}, using the same Krylov solver and
+  tolerances for both sides of the latter comparison, up to
+  $3.9\times10^{6}$ unknowns (Sec.~\ref{sec:bench}).
+\item We use the exact variant to produce a converged low-temperature reference
+  for a correlated quench of the Anderson impurity model, with an explicit error
+  budget, intended as a test case for approximate and neural solvers
+  (Sec.~\ref{sec:reference}).
+\end{enumerate}
+The elimination itself is elementary linear algebra. Its interest lies in the
+structure that makes it exact and cheap, and in what it buys in practice.
 
-\paragraph{System.} A spinful single-level impurity,
+\section{Model and hierarchy}\label{sec:model}
+
+We consider a spinful single-level impurity,
 \begin{equation}
-H_S = \sum_{\sigma}\varepsilon\, n_\sigma + U n_\uparrow n_\downarrow,
-\qquad \varepsilon = -0.5\ \mathrm{meV},\quad U = 1\ \mathrm{meV},
+H_S = \varepsilon \sum_{\sigma} n_\sigma + U n_\uparrow n_\downarrow ,
+\qquad \varepsilon = -0.5~\mathrm{meV},\quad U = 1~\mathrm{meV},
 \end{equation}
-so $\varepsilon = -U/2$ (particle--hole symmetric at $\mu = 0$). Each spin couples to one
-fermionic lead with a Lorentzian spectral density of width
-$\Gamma = 0.1$\,meV and bandwidth $W = 5$\,meV. The system Hilbert space has
-dimension $d = 4$, so each ADO is a $4\times4$ matrix.
+so that $\varepsilon = -U/2$ and the model is particle--hole symmetric at zero
+chemical potential. Each spin is coupled to one fermionic lead with a Lorentzian
+hybridisation of width $\Gamma = 0.1$\,meV and bandwidth $W = 5$\,meV. The system
+Hilbert space has dimension $d = 4$.
 
-\paragraph{Bath expansion.} The lead correlation functions are expanded in
-exponentials,
+The lead correlation functions are expanded as
 \begin{equation}
-C^{\pm}_\sigma(t) = \sum_k \eta^{\pm}_k e^{-\gamma^{\pm}_k t},
+C^{\pm}_{\sigma}(t) = \sum_{k=0}^{N_k} \eta^{\pm}_{k}\, e^{-\gamma^{\pm}_{k} t},
 \end{equation}
-with one Lorentzian pole and $N_k$ Padé poles of the Fermi function~\cite{HuXuYan2010}.
-Lower temperature needs more poles, because the Fermi function becomes sharper.
-The coefficients were rebuilt from the physical parameters and matched against
-published values to numerical precision.
+with one Lorentzian pole and $N_k$ Padé poles of the Fermi
+function~\cite{HuXuYan2010}. The coefficients were reconstructed from the
+physical parameters and agree with published values to numerical precision.
+With two spins and two signs, the bath is described by $K = 4(N_k + 1)$
+exponents.
 
-\paragraph{Hierarchy.} Each ADO $\rho_{\mathbf{j}}$ is labelled by a set of
-occupied bath exponents; its \emph{tier} is $|\mathbf{j}|$. Truncating at depth
-$n$ keeps tiers $0,\dots,n$; tier 0 is the physical reduced density matrix. The
-fermionic HEOM has the structure
+Each ADO $\rho_{\mathbf{j}}$ is labelled by a set $\mathbf{j}$ of occupied
+exponents; for fermions each exponent is occupied at most once, and the tier of
+$\rho_{\mathbf{j}}$ is $|\mathbf{j}|$. Truncating at depth $n$ keeps tiers
+$0,\dots,n$, of which tier $0$ is the physical reduced density matrix. The
+fermionic HEOM has the structure~\cite{Jin2008}
 \begin{equation}
-\dot\rho_{\mathbf{j}} = -\Big(i\Lc_S + \sum_{k\in\mathbf{j}}\gamma_k\Big)\rho_{\mathbf{j}}
-\;+\;\sum_{k\notin\mathbf{j}}\mathcal{A}_k\,\rho_{\mathbf{j}+k}
-\;+\;\sum_{k\in\mathbf{j}}\mathcal{C}_k\,\rho_{\mathbf{j}-k},
+\dot\rho_{\mathbf{j}} = -\Big(i\Lc_S + \sum_{k\in\mathbf{j}} \gamma_k\Big)\rho_{\mathbf{j}}
++ \sum_{k\notin\mathbf{j}} \mathcal{A}_k\, \rho_{\mathbf{j}+k}
++ \sum_{k\in\mathbf{j}} \mathcal{C}_k\, \rho_{\mathbf{j}-k},
 \label{eq:heom}
 \end{equation}
-where $\mathcal{A}_k,\mathcal{C}_k$ are (anti)commutator superoperators with the
-impurity creation/annihilation operators. Writing all ADOs as one vector $y$,
-$\dot y = \Lc y$. All generators here are built with QuTiP's HEOM
-module~\cite{Lambert2023}.
+where $\Lc_S = [H_S,\cdot\,]$ and $\mathcal{A}_k$, $\mathcal{C}_k$ are
+(anti)commutator superoperators with the impurity creation and annihilation
+operators. Stacking all ADOs into a vector $y$ gives $\dot y = \Lc y$, with $\Lc$
+sparse. Generators are built with QuTiP~\cite{Lambert2023} and, independently,
+with HierarchicalEOM.jl~\cite{Huang2023}; the two produce identical bath
+exponents for this model (Sec.~\ref{sec:bench}).
 
-\paragraph{Protocol.} At $\mu = 0$ the correlated stationary hierarchy $y_0$
-solves $\Lc(\mu{=}0)\,y_0 = 0$ with $\tr\rho = 1$. The lead chemical potential is
-then quenched to $\mu = 0.05$\,meV and $\langle n_\uparrow\rangle(t)$ is
-propagated for 6\,ps with an explicit DOP853 integrator ($\mathrm{rtol}=10^{-10}$,
-$\mathrm{atol}=10^{-12}$). Using $y_0$ rather than a product state $\rho_S\otimes\rho_B$
-matters: system--bath correlations are present before the quench, and copying
-only the impurity occupations does not reproduce them.
-
-\section{Exact elimination of the deepest tier}
-
-Order the depth-$(n{+}1)$ vector as $y = (x, u)$, with $x$ the tiers $0,\dots,n$ and
-$u$ the deepest tier $n{+}1$. Then
+The stationary problem is
 \begin{equation}
-\Lc = \begin{pmatrix} A & B\\ C & D\end{pmatrix}.
+\Lc y = 0, \qquad \tr \rho_{\mathbf{0}} = 1 .
+\label{eq:stationary}
 \end{equation}
-By Eq.~\eqref{eq:heom}, an ADO in the deepest tier is coupled \emph{upward} to tier $n$ (block $C$),
-but there is no tier $n{+}2$ below it, and ADOs within one tier are not coupled
-to each other. Hence $D$ only contains each ADO's own term
-$-(i\Lc_S + \sum_{k}\gamma_k)$: it is block diagonal with $d^2\times d^2$ blocks.
-For this impurity $H_S$ is diagonal in the occupation basis, so $i\Lc_S$ is
-diagonal in the corresponding Liouville basis and $D$ is \emph{exactly diagonal}
-(verified numerically: 79{,}360 nonzeros on a 79{,}360-dimensional block, none
-off-diagonal). Its entries $-(i(E_a-E_b) + \sum_k\gamma_k)$ have strictly
-negative real part, so $D$ is invertible.
+In the quench protocol, the stationary hierarchy at $\mu = 0$ is propagated after
+the lead chemical potential is switched to $\mu = 0.05$\,meV, and
+$\langle n_\uparrow\rangle(t)$ is recorded over 6\,ps with an explicit DOP853
+integrator ($\mathrm{rtol} = 10^{-10}$, $\mathrm{atol} = 10^{-12}$). Starting from
+the correlated stationary hierarchy, rather than from a product state, retains
+the system--bath correlations present before the quench.
 
-At stationarity,
+\section{Exact elimination of the deepest tier}\label{sec:method}
+
+\subsection{Reduction}
+
+Order the depth-$n$ state as $y = (x, u)$, where $u$ collects the ADOs of tier $n$
+and $x$ those of tiers $0,\dots,n-1$:
 \begin{equation}
-A x + B u = 0,\qquad C x + D u = 0
-\;\Longrightarrow\; u = -D^{-1}C x,\qquad (A - BD^{-1}C)\,x = 0,\quad \tr\rho = 1.
+\Lc = \begin{pmatrix} A & B \\ C & D \end{pmatrix}.
+\end{equation}
+By Eq.~\eqref{eq:heom}, a tier-$n$ ADO couples upward to tier $n-1$ (block $C$),
+and would couple downward to tier $n+1$, which the truncation removes. ADOs of
+the same tier are not coupled to each other. Hence $D$ contains only the local
+term $-(i\Lc_S + \sum_{k\in\mathbf{j}}\gamma_k)$ of each tier-$n$ ADO, and is
+block diagonal with $d^2\times d^2$ blocks.
+
+\begin{proposition}
+If every diagonal block of $D$ is invertible, the solutions of
+Eq.~\eqref{eq:stationary} are exactly the vectors
+$y = (x, -D^{-1}Cx)$ with
+\begin{equation}
+S x \equiv \left(A - B D^{-1} C\right) x = 0, \qquad \tr \rho_{\mathbf{0}} = 1 .
 \label{eq:schur}
 \end{equation}
-The Schur complement $S = A - BD^{-1}C$ has the size of the depth-$n$ hierarchy
-but describes the depth-$(n{+}1)$ stationary state \emph{exactly}: nothing is
-truncated or approximated. The deepest tier is then recovered by a diagonal
-division. The normalisation is imposed by replacing one row of $S$ with the trace
-functional, and the resulting sparse system is solved directly.
+\end{proposition}
+\noindent\emph{Proof.} The second block row of $\Lc y = 0$ reads $Cx + Du = 0$,
+hence $u = -D^{-1}Cx$; substituting into the first row gives $Sx = 0$. The
+converse follows by reversing the steps. The trace condition involves only
+$\rho_{\mathbf{0}}$, which belongs to $x$. \hfill$\square$
 
-This is Gaussian elimination, and it is closely related to the HEOM
-\emph{terminators} that close the hierarchy by expressing the last tier through
-the one above~\cite{TanimuraWolynes1991,IshizakiTanimura2005}; we claim no new
-theory. Two points are worth stressing. (i) For the stationary state the
-elimination is exact, not an approximate closure, because $\dot u = 0$ removes
-the only term that a terminator has to model. (ii) It does \emph{not} apply to the
-dynamics: after the quench, $\dot u\neq 0$ and the deepest tier carries memory,
-so time propagation uses the full hierarchy.
+When $H_S$ is diagonal in the occupation basis, as here, $\Lc_S$ is diagonal in
+the corresponding Liouville basis, and $D$ is diagonal with entries
+$-\big(i(E_a - E_b) + \sum_{k\in\mathbf{j}}\gamma_k\big)$. Their real parts are
+strictly negative, so $D$ is invertible; numerically, the tier-4 block for
+$N_k = 7$ has $79{,}360$ nonzero entries, all on the diagonal. For a general
+system $D$ remains block diagonal with $d^2\times d^2$ blocks and is equally cheap
+to invert.
 
-\section{Results}
+Two remarks delimit the scope. First, the reduction is exact only for the
+stationary problem: during time evolution $\dot u \neq 0$, so the deepest tier
+carries memory and the full hierarchy must be propagated. In the language of
+Ref.~\cite{Vadimov2026}, the stationary reduction is a Schur complement whose
+tail block is known exactly rather than approximated. Second, the reduction
+removes the deepest tier of a hierarchy that has already been truncated; it does
+not change the truncation error of depth $n$.
 
-\subsection{Exactness and cost of the stationary state}
+\subsection{Why the deepest tier dominates}
 
-Table~\ref{tab:cost} compares the eliminated solve with QuTiP's
-\texttt{HEOMSolver.steady\_state()} on the full hierarchy. Where both run, they
-agree to between $10^{-15}$ and $3\times10^{-13}$ over \emph{all} ADOs, i.e.\
-to linear-algebra precision. The speed-up grows with the problem size, reaching
-$163\times$ at $N_k = 7$, depth 3. At depth 4 with $N_k = 5$ the direct solve runs
-out of memory on the 7\,GB test machine, while the eliminated solve needs about
-1\,GB; the $N_k = 7$, depth 4 hierarchy (41{,}449 ADOs) is solved in 164\,s. For these
-the full-hierarchy residual $\|\Lc y_0\|$ is below $10^{-14}$.
+For a fermionic bath with $K$ exponents, tier $k$ contains $\binom{K}{k}$ ADOs,
+and the ratio of consecutive tiers is
+$\binom{K}{n}\big/\binom{K}{n-1} = (K-n+1)/n$. Whenever $K \gg n$, which is the
+regime of low temperature, the deepest tier therefore holds most of the
+hierarchy. Table~\ref{tab:count} lists the counts for the cases used below; the
+predicted sizes match those of the generators built by both packages exactly.
+Eliminating the deepest tier shrinks the stationary system by a factor
+$\sum_{k\le n}\binom{K}{k} \big/ \sum_{k<n}\binom{K}{k}$, between 4 and 10 here.
 
 \begin{table}[h]
 \centering\small
-\begin{tabular}{rrrrrrrc}
+\begin{tabular}{rrrrrr}
 \toprule
-$T/\Gamma$ & $N_k$ & depth & ADOs & unknowns & direct & eliminated & max diff / residual\\
+$N_k$ & depth $n$ & $K$ & ADOs & deepest-tier share & unknowns: full $\to$ reduced\\
 \midrule
-3.0 & 3 & 3 & 697 & 11{,}152 & 0.16 s & 0.025 s & $9.1\times10^{-16}$\\
-0.3 & 3 & 3 & 697 & 11{,}152 & 0.18 s & 0.030 s & $2.2\times10^{-14}$\\
-0.3 & 3 & 4 & 2{,}517 & 40{,}272 & 5.8 s & 0.40 s & $4.7\times10^{-14}$\\
-0.3 & 7 & 3 & 5{,}489 & 87{,}824 & 75.1 s & 0.46 s & $3.4\times10^{-13}$\\
-0.3 & 5 & 4 & 12{,}951 & 207{,}216 & out of memory & 11.3 s & $\|\Lc y_0\| = 1.2\times10^{-15}$\\
-0.3 & 7 & 4 & 41{,}449 & 663{,}184 & --- & 164 s & $\|\Lc y_0\| = 7.3\times10^{-15}$\\
+3 & 3 & 16 & 697 & 80\% & 11{,}152 $\to$ 2{,}192\\
+3 & 4 & 16 & 2{,}517 & 72\% & 40{,}272 $\to$ 11{,}152\\
+7 & 3 & 32 & 5{,}489 & 90\% & 87{,}824 $\to$ 8{,}464\\
+5 & 4 & 24 & 12{,}951 & 82\% & 207{,}216 $\to$ 37{,}200\\
+7 & 4 & 32 & 41{,}449 & 87\% & 663{,}184 $\to$ 87{,}824\\
+5 & 5 & 24 & 55{,}455 & 77\% & 887{,}280 $\to$ 207{,}216\\
+7 & 5 & 32 & 242{,}825 & 83\% & 3{,}885{,}200 $\to$ 663{,}184\\
 \bottomrule
 \end{tabular}
-\caption{Correlated stationary state at $\mu=0$: direct QuTiP solve versus
-deepest-tier elimination (2 CPU cores, 7\,GB RAM). The last column is the maximum
-absolute difference over all ADOs where the direct solve exists, otherwise the
-residual of the full-hierarchy generator.}
-\label{tab:cost}
+\caption{Hierarchy sizes. $K = 4(N_k+1)$ is the number of bath exponents, and
+each ADO carries $d^2 = 16$ unknowns.}
+\label{tab:count}
 \end{table}
 
+\subsection{Solving the reduced system}
+
+The reduced system can be solved in two ways. A sparse direct factorisation of
+$S$ gives the stationary state to machine precision; $S$ is, however, denser than
+the corresponding block of $\Lc$, because $BD^{-1}C$ couples tier-$(n-1)$ ADOs
+that share a deepest-tier neighbour. Alternatively, a Krylov method needs only
+products $Sx$, which we evaluate without forming $S$:
+\begin{equation}
+Sx = Ax - B\big(D^{-1}(Cx)\big).
+\label{eq:matfree}
+\end{equation}
+One such product costs about as much as one product with $\Lc$, since $A$, $B$ and
+$C$ are sub-blocks of $\Lc$ and $D^{-1}$ is diagonal. The vectors on which the
+Krylov method operates are, however, 4 to 10 times shorter. In GMRES the
+orthogonalisation of each new vector against the previous ones costs
+$\mathcal{O}(jN)$ at iteration $j$ for vectors of length $N$, and for the
+hierarchies considered here, with $\mathcal{O}(10^2)$ iterations and roughly ten
+nonzeros per row, this term is comparable to or larger than the matrix--vector
+product. Shortening the vectors therefore reduces the cost per iteration
+substantially even though the product itself is not cheaper. We observe in
+addition that GMRES needs fewer iterations on the reduced system
+(Table~\ref{tab:julia}); we have not analysed the origin of this effect.
+
+\section{Benchmarks}\label{sec:bench}
+
+All stationary states in this section are computed for $T/\Gamma = 0.3$; times
+exclude the construction of the generator, which both methods share.
+
+\subsection{Comparison with the QuTiP direct solver}
+
+Table~\ref{tab:qutip} compares the reduction, solved with a sparse direct
+factorisation, with the \texttt{steady\_state} method of QuTiP's HEOM solver, a sparse direct
+solve of the full hierarchy. Where both complete, the full stationary
+hierarchies agree to between $10^{-15}$ and $3\times10^{-13}$ in the maximum
+norm over all ADOs. The speed-up grows with the size of the problem. At
+$207{,}216$ unknowns the direct solve exhausted 7\,GB of memory on a workstation
+and had not finished after 25 minutes on a 31.7\,GB laptop, whereas the
+reduction took 11.3\,s and 36.0\,s respectively.
+
+\begin{table}[h]
+\centering\small
+\begin{tabular}{rrrrrrr}
+\toprule
+& & & \multicolumn{2}{c}{workstation (2 cores, 7\,GB)} & \multicolumn{2}{c}{laptop (31.7\,GB)}\\
+\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+$N_k$ & $n$ & unknowns & QuTiP & reduced & QuTiP & reduced\\
+\midrule
+3 & 3 & 11{,}152 & 0.18 s & 0.030 s & 0.77 s & 0.021 s\\
+3 & 4 & 40{,}272 & 5.8 s & 0.40 s & 37.3 s & 2.53 s\\
+7 & 3 & 87{,}824 & 75.1 s & 0.46 s & 181.9 s & 2.26 s\\
+5 & 4 & 207{,}216 & out of memory & 11.3 s & $> 25$ min & 36.0 s\\
+7 & 4 & 663{,}184 & --- & 164 s & --- & ---\\
+\bottomrule
+\end{tabular}
+\caption{Exact stationary solves: QuTiP's direct solver on the full hierarchy
+versus a direct solve of the reduced system~\eqref{eq:schur}. Maximum
+differences between the two solutions are $\le 3\times10^{-13}$; where only the
+reduced solve completes, the residual $\|\Lc y\|$ is below $10^{-14}$.}
+\label{tab:qutip}
+\end{table}
 
 \subsection{Comparison with HierarchicalEOM.jl}
 
-HierarchicalEOM.jl~\cite{Huang2023} is, to our knowledge, the fastest
-general-purpose HEOM package. Its default steady-state solver is not a direct
-factorisation but GMRES (relative tolerance $10^{-12}$, absolute $10^{-14}$) on the
-full hierarchy plus the trace constraint. We built the identical model in it,
-checked that its bath exponents equal QuTiP's, and compared three solvers on one
-laptop (Windows, 31.7\,GB): its default, the exact elimination with a direct
-solve, and the \emph{same} GMRES (Krylov.jl~\cite{Krylov2023}, same tolerances)
-applied to the eliminated system. In the last variant $S = A - BD^{-1}C$ is never
-formed: each product $Sx$ is computed as $Ax - B\,(D^{-1}(Cx))$, so no fill-in
-appears.
+HierarchicalEOM.jl~\cite{Huang2023} is substantially faster than QuTiP, and its
+default steady-state solver is not a direct factorisation but GMRES with
+relative tolerance $10^{-12}$ and absolute tolerance $10^{-14}$, applied to the
+full hierarchy with the trace condition added to the first row. To isolate the
+effect of the reduction, we use the same GMRES implementation
+(Krylov.jl~\cite{Krylov2023}) with the same tolerances on both the full system,
+which reproduces the package default to within a few per cent in time, and on the
+reduced system in the matrix-free form~\eqref{eq:matfree}. Before timing, we
+verified that the package builds bath exponents identical to QuTiP's and
+reproduces the reference occupations. All runs in this subsection were
+performed on the same laptop.
 
 \begin{table}[h]
 \centering\small
-\begin{tabular}{rrrrrrc}
+\setlength{\tabcolsep}{5pt}
+\begin{tabular}{rrrrrrr}
 \toprule
-$N_k$ & depth & unknowns (full $\to$ eliminated) & full GMRES & eliminated GMRES & iterations & gain\\
+$N_k$ & $n$ & unknowns & full & reduced & iterations & speed-up\\
 \midrule
-7 & 3 & 87{,}824 $\to$ 8{,}464 & 1.74 s & 0.10 s & 165 $\to$ 107 & 16.8$\times$\\
-5 & 4 & 207{,}216 $\to$ 37{,}200 & 2.94 s & 1.34 s & 166 $\to$ 144 & 2.2$\times$\\
-7 & 4 & 663{,}184 $\to$ 87{,}824 & 9.09 s & 2.61 s & 177 $\to$ 155 & 3.5$\times$\\
-5 & 5 & 887{,}280 $\to$ 207{,}216 & 13.75 s & 4.54 s & 184 $\to$ 165 & 3.0$\times$\\
-7 & 5 & 3{,}885{,}200 $\to$ 663{,}184 & 99.4 s & 22.7 s & 288 $\to$ 255 & 4.4$\times$\\
+7 & 3 & 87{,}824 $\to$ 8{,}464 & 1.74 s & 0.10 s & 165 $\to$ 107 & 16.8\\
+5 & 4 & 207{,}216 $\to$ 37{,}200 & 2.94 s & 1.34 s & 166 $\to$ 144 & 2.2\\
+7 & 4 & 663{,}184 $\to$ 87{,}824 & 9.09 s & 2.61 s & 177 $\to$ 155 & 3.5\\
+5 & 5 & 887{,}280 $\to$ 207{,}216 & 13.75 s & 4.54 s & 184 $\to$ 165 & 3.0\\
+7 & 5 & 3{,}885{,}200 $\to$ 663{,}184 & 99.4 s & 22.7 s & 288 $\to$ 255 & 4.4\\
 \bottomrule
 \end{tabular}
-\caption{Same GMRES settings for both columns ($T/\Gamma=0.3$, $\mu = 0.05$\,meV);
-the last row uses restarts every 100 iterations for both. Both answers agree with
-each other (and, where available, with the exact reference) to
-$\lesssim 10^{-11}$.}
+\caption{GMRES with identical settings on the full hierarchy (the
+HierarchicalEOM.jl default) and on the reduced system applied matrix-free. The
+largest case uses restarts every 100 iterations for both. Where an exact
+reference exists, both solutions give occupations within $10^{-11}$ of it; in the
+two largest cases, where none exists, they agree with each other to
+$\le 2\times10^{-12}$.}
 \label{tab:julia}
 \end{table}
 
-Three observations. First, the eliminated GMRES is faster at every size, and the
-gain does not fade with size (Table~\ref{tab:julia}, Fig.~\ref{fig:speed}).
-Second, it needs fewer iterations as well as cheaper ones. Third, the exact
-direct variant is the right tool when the answer must be exact: up to
-$\sim 2\times10^{5}$ unknowns it is also faster than the package default, and
-it agrees with QuTiP to $7\times10^{-14}$ at 663{,}184 unknowns where the GMRES
-answers agree only to $\sim 10^{-11}$. At that size, however, it is slower than
-the package default (12.1\,s vs 9.4\,s) because $S$ is denser than the full
-generator, which is exactly what the matrix-free variant avoids.
+The reduced solve is faster at every size (Table~\ref{tab:julia},
+Fig.~\ref{fig:speed}), and the gain does not decrease with size: it is 3.5 at
+$6.6\times10^5$ unknowns and 4.4 at $3.9\times10^6$. Iteration counts are
+also lower on the reduced system. The exact direct variant answers a different
+need. It is faster than the package default up to about $2\times10^5$ unknowns
+and agrees with QuTiP to $7\times10^{-14}$ at $663{,}184$ unknowns, against
+$\sim 10^{-11}$ for the GMRES solutions; at that size, however, it is slower
+than the package default (12.1\,s against 9.4\,s), because of the fill-in
+discussed above.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{speed_comparison.pdf}
-\caption{Steady-state solve time against hierarchy size on a laptop. Left: exact
-solves (the QuTiP run at 207{,}216 unknowns was stopped after 25 minutes).
-Right: identical GMRES on the full and on the eliminated hierarchy.}
+\caption{Stationary-solve time against hierarchy size on a laptop. Left: exact
+solves; the QuTiP run at $207{,}216$ unknowns was stopped after 25 minutes.
+Right: identical GMRES settings on the full hierarchy and on the reduced system.
+Labels give the speed-up.}
 \label{fig:speed}
 \end{figure}
 
-\subsection{Convergence of the quench}
+\section{A converged low-temperature reference}\label{sec:reference}
 
-Each run starts from its own correlated stationary hierarchy, so the depth
-comparison is consistent: initial state and dynamics are truncated at the same
-depth. Table~\ref{tab:depth} gives the maximum change of
-$\langle n_\uparrow\rangle(t)$ over the 6\,ps window between successive depths.
+The exact variant makes it possible to start every hierarchy depth from its own
+correlated stationary state, so that initial state and dynamics are truncated
+consistently. Table~\ref{tab:depth} gives the maximum change of
+$\langle n_\uparrow\rangle(t)$ over the 6\,ps window between successive depths,
+and Table~\ref{tab:pade} the corresponding checks in Padé order and integration
+tolerance.
 
 \begin{table}[h]
 \centering\small
@@ -256,27 +363,10 @@ $T/\Gamma$ & $N_k$ & $2\to3$ & $3\to4$ & $4\to5$\\
 0.3 & 7 & $1.59\times10^{-3}$ & $1.61\times10^{-4}$ & ---\\
 \bottomrule
 \end{tabular}
-\caption{Depth convergence: $\max_t|\Delta\langle n_\uparrow\rangle|$ between successive hierarchy depths.}
+\caption{Depth convergence of the quench:
+$\max_t|\Delta\langle n_\uparrow\rangle|$ between successive depths.}
 \label{tab:depth}
 \end{table}
-
-Convergence in depth is geometric: at low temperature each extra tier reduces
-the change by about $10\times$ and then $70\times$. Low temperature is harder
-than high temperature by more than an order of magnitude at every depth, as
-expected from the slower Padé modes. The depth error is almost independent of
-$N_k$ (at each step, rows 2--4 agree to within 10\%), which justifies using the $N_k = 3$
-depth-5 step ($2.4\times10^{-6}$) as the estimate of the remaining depth error at
-$N_k = 7$, depth 4.
-
-\begin{figure}[t]
-\centering
-\includegraphics[width=\linewidth]{tier_elimination_convergence.pdf}
-\caption{Hierarchy-depth convergence of the quench and cost of preparing the
-correlated stationary state, direct versus eliminated.}
-\label{fig:conv}
-\end{figure}
-
-\subsection{Padé order and integrator}
 
 \begin{table}[h]
 \centering\small
@@ -284,86 +374,107 @@ correlated stationary state, direct versus eliminated.}
 \toprule
 check ($T/\Gamma = 0.3$) & $\max_t|\Delta\langle n_\uparrow\rangle|$\\
 \midrule
-Padé $N_k$ $3\to5$ (depth 4) & $1.57\times10^{-3}$\\
-Padé $N_k$ $5\to7$ (depth 4) & $5.10\times10^{-5}$\\
-Padé $N_k$ $5\to7$ (depth 3) & $5.07\times10^{-5}$\\
-Padé $N_k$ $7\to9$ (depth 3) & $7.44\times10^{-6}$\\
-integrator rtol $10^{-10}$ vs $10^{-7}$ ($N_k=7$, depth 3) & $3.5\times10^{-9}$\\
+Padé $N_k = 3\to5$ (depth 4) & $1.57\times10^{-3}$\\
+Padé $N_k = 5\to7$ (depth 4) & $5.10\times10^{-5}$\\
+Padé $N_k = 5\to7$ (depth 3) & $5.07\times10^{-5}$\\
+Padé $N_k = 7\to9$ (depth 3) & $7.44\times10^{-6}$\\
+integrator $\mathrm{rtol}=10^{-10}$ vs $10^{-7}$ ($N_k=7$, depth 3) & $3.5\times10^{-9}$\\
 \bottomrule
 \end{tabular}
 \caption{Padé-order and time-integration checks.}
 \label{tab:pade}
 \end{table}
 
-Table~\ref{tab:pade} shows that at $T/\Gamma = 0.3$, three Padé poles are not
-enough: the $N_k = 3\to5$ change ($1.6\times10^{-3}$) is as large as the depth-2
-truncation error, so a low-temperature result with $N_k = 3$ is limited by the bath
-expansion, not by the hierarchy depth. The Padé error is also nearly
-independent of depth (rows 2--3), so the two error sources can be estimated
-separately.
+Convergence in depth is geometric, with each additional tier reducing the
+change by one to two orders of magnitude, and low temperature is harder than
+high temperature by more than an order of magnitude at every depth. Two
+properties allow the errors to be budgeted separately: the depth error is
+nearly independent of $N_k$ (rows 2--4 of Table~\ref{tab:depth} agree to within
+10\% at each step), and the Padé error is nearly independent of depth
+(rows 2--3 of Table~\ref{tab:pade}). Three Padé poles are not sufficient at this
+temperature: the change from $N_k=3$ to $5$ is as large as the depth-2
+truncation error, so low-temperature results obtained with $N_k = 3$ are limited
+by the bath expansion rather than by the hierarchy.
 
-\subsection{Converged reference}
-
-At $T/\Gamma = 0.3$, $N_k = 7$, depth 4, after the $\mu: 0\to0.05$\,meV quench,
+At $T/\Gamma = 0.3$, $N_k = 7$ and depth 4, after the quench
+$\mu: 0 \to 0.05$\,meV,
 \begin{equation}
-\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.503618,
+\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.503618 ,
 \end{equation}
-with estimated errors of about $2\times10^{-6}$ (depth), $7\times10^{-6}$ (Padé) and
-below $10^{-8}$ (integration): a total uncertainty of order $10^{-5}$, about
-$160\times$ smaller than the depth-2 truncation error it replaces. All final reduced
-density matrices are positive (smallest eigenvalue 0.028) with unit trace.
-The full trajectories are stored in the repository and regenerate in about
-6 minutes on 2 cores (peak memory 4.5\,GB).
+with estimated errors of $2\times10^{-6}$ from the hierarchy depth (taken from
+the $N_k = 3$, depth-5 step), $7\times10^{-6}$ from the Padé order and below
+$10^{-8}$ from time integration, for a total uncertainty of order $10^{-5}$. All
+final reduced density matrices are positive (smallest eigenvalue 0.028) and of
+unit trace. As a partial check of the depth estimate, the depth-5 stationary
+state for $N_k = 7$ at $\mu = 0.05$\,meV, obtained in Sec.~\ref{sec:bench},
+changes $\langle n_\uparrow\rangle$ by $4.1\times10^{-6}$ relative to depth 4.
+Figure~\ref{fig:conv} summarises the convergence.
 
-\section{Limitations}
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{tier_elimination_convergence.pdf}
+\caption{(a) Low-temperature quench for increasing depth, $N_k = 7$.
+(b) Maximum change between successive depths. (c) Cost of the correlated
+stationary state, direct solve versus reduction (workstation).}
+\label{fig:conv}
+\end{figure}
 
-\begin{itemize}
-\item The elimination is exact only for the stationary state. After the quench
-  the full hierarchy is propagated (29\,s at $N_k = 7$, depth 4).
-\item The depth error at $N_k = 7$ is extrapolated from the $N_k = 3$ depth-5 run.
-  A direct $N_k = 7$ depth-5 \emph{dynamics} run was not done; the depth-5
-  \emph{stationary} state at $\mu = 0.05$\,meV (3.9 million unknowns, Table~\ref{tab:julia})
-  moves $\langle n_\uparrow\rangle$ by $4\times10^{-6}$ from depth 4, the same
-  order as the estimate.
-\item The speed comparison covers one model, one machine and the package's
-  default solver settings. A preconditioned or otherwise tuned solver could
-  change the numbers, and the elimination would combine with it.
-\item The model has one lead per spin. It is a standard benchmark geometry but not
-  the two-lead (source--drain) set-up of transport studies.
-\item At points with $\varepsilon-\mu=-U/2$ the occupation stays exactly 0.5 at
-  every depth by particle--hole symmetry, so such points are trivial tests and
-  should not be used to validate solvers.
-\item $D$ is diagonal here because $H_S$ is diagonal in the occupation basis. For a
-  general system $D$ is block diagonal with $d^2\times d^2$ blocks, which are
-  still cheap to invert but no longer trivially so.
-\end{itemize}
+\section{Discussion}\label{sec:discussion}
 
-\section{Outlook}
+The reduction is a small change to existing codes: it requires the tier of each
+ADO, a split of the generator into four blocks, and a diagonal (or $d^2\times
+d^2$ block-diagonal) inversion. It combines with, rather than replaces, the
+approaches cited in the introduction. Better bath decompositions lower $K$ and
+leave the deepest tier dominant whenever $K \gg n$. Importance-based pruning and
+preconditioning act on the remaining system, and steady-state transport
+calculations in a two-lead geometry, where the stationary solve is the whole
+computation, are an immediate application.
 
-The reference gives a fixed target for approximate solvers of non-Markovian
-dynamics. The natural next test is whether a neural or reduced-order model,
-trained at lower depth, can reproduce $\langle n_\uparrow\rangle(t)$ to the
-$10^{-4}$ level at a fraction of the full-hierarchy cost. The same elimination
-applies to any HEOM stationary problem, for example steady-state currents in a
-two-lead geometry, where the stationary solve is the whole calculation.
+The study has clear limits. It covers one model, a single-orbital impurity with
+one lead per spin, and the benchmark against HierarchicalEOM.jl uses that
+package's default solver settings on one machine; a tuned or preconditioned
+solver could change the absolute numbers, and the reduction would apply to it
+as well. The particle--hole symmetric point $\varepsilon - \mu = -U/2$ keeps the
+occupation at exactly $0.5$ at every depth and should not be used to validate
+solvers. Finally, the depth error of the dynamical reference is extrapolated
+from $N_k = 3$; a direct $N_k = 7$, depth-5 propagation was not performed.
 
-\paragraph{Code and data.} Implementation
-(\path{src/nonmarkovian_neural_dynamics/tier_elimination.py}), unit tests
-against QuTiP, convergence script and figure are in the repository above; the
-benchmark scripts (Python and Julia), raw results and plotting script are in
-\path{benchmarks/heom_steady_state/}. The
-headline result was reproduced by an independent CI run to 13 digits.
+\section{Conclusion}
 
-\begin{thebibliography}{9}
+In a truncated hierarchy, the deepest tier is the largest and the simplest:
+it contains most of the ADOs, and its generator block is local. At
+stationarity it can be removed exactly. Doing so reduces the stationary system
+4- to 10-fold for the low-temperature Anderson model studied here, accelerates
+both direct and Krylov solves, and enabled a converged reference that will
+serve to grade cheaper solvers, including neural ones, in the regime where
+memory effects are strongest.
+
+\paragraph{Code and data availability.}
+The implementation
+(\path{src/nonmarkovian_neural_dynamics/tier_elimination.py}), its unit tests
+against QuTiP, the convergence scripts, and the Python and Julia benchmarks with
+raw results and plotting scripts (\path{benchmarks/heom_steady_state/}) are
+available in the repository listed above.
+
+\begin{thebibliography}{99}
+\small
 \bibitem{TanimuraKubo1989} Y.~Tanimura and R.~Kubo, J.\ Phys.\ Soc.\ Jpn.\ \textbf{58}, 101 (1989).
 \bibitem{Tanimura2020} Y.~Tanimura, J.\ Chem.\ Phys.\ \textbf{153}, 020901 (2020).
 \bibitem{Jin2008} J.~Jin, X.~Zheng, and Y.~Yan, J.\ Chem.\ Phys.\ \textbf{128}, 234703 (2008).
 \bibitem{HuXuYan2010} J.~Hu, R.-X.~Xu, and Y.~Yan, J.\ Chem.\ Phys.\ \textbf{133}, 101106 (2010).
-\bibitem{Lambert2023} N.~Lambert \emph{et al.}, Phys.\ Rev.\ Research \textbf{5}, 013181 (2023).
+\bibitem{Xu2022} M.~Xu, Y.~Yan, Q.~Shi, J.~Ankerhold, and J.~T.~Stockburger, Phys.\ Rev.\ Lett.\ \textbf{129}, 230601 (2022).
+\bibitem{Dan2023} X.~Dan \emph{et al.}, Efficient low temperature simulations for fermionic reservoirs with the hierarchical equations of motion method: application to the Anderson impurity model, arXiv:2211.04089.
+\bibitem{Shi2018} Q.~Shi, Y.~Xu, Y.~Yan, and M.~Xu, J.\ Chem.\ Phys.\ \textbf{148}, 174102 (2018).
+\bibitem{Borrelli2019} R.~Borrelli, J.\ Chem.\ Phys.\ \textbf{150}, 234102 (2019).
+\bibitem{Ke2022} Y.~Ke, R.~Borrelli, and M.~Thoss, Hierarchical equations of motion approach to hybrid fermionic and bosonic environments: matrix product state formulation in twin space, arXiv:2202.10273.
+\bibitem{Huang2023} Y.-T.~Huang, P.-C.~Kuo, N.~Lambert, M.~Cirio, S.~Cross, S.-L.~Yang, F.~Nori, and Y.-N.~Chen, Commun.\ Phys.\ \textbf{6}, 313 (2023).
+\bibitem{Cao2025} L.~Cao \emph{et al.}, Simulating non-Markovian open quantum dynamics with neural quantum states, arXiv:2404.11093.
+\bibitem{Cao2026} L.~Cao \emph{et al.}, Simulating non-Markovian open quantum dynamics by exploiting physics-informed neural network, arXiv:2603.08081.
 \bibitem{TanimuraWolynes1991} Y.~Tanimura and P.~G.~Wolynes, Phys.\ Rev.\ A \textbf{43}, 4131 (1991).
 \bibitem{IshizakiTanimura2005} A.~Ishizaki and Y.~Tanimura, J.\ Phys.\ Soc.\ Jpn.\ \textbf{74}, 3131 (2005).
-\bibitem{Huang2023} Y.-T.~Huang \emph{et al.}, Commun.\ Phys.\ \textbf{6}, 313 (2023) (HierarchicalEOM.jl).
-\bibitem{Krylov2023} A.~Montoison and D.~Orban, J.\ Open Source Softw.\ \textbf{8}, 5187 (2023) (Krylov.jl).
+\bibitem{Vadimov2026} V.~Vadimov, On truncations of hierarchical equations of motion for finite-dimensional systems, arXiv:2604.22568.
+\bibitem{Lambert2023} N.~Lambert, T.~Raheja, S.~Cross, P.~Menczel, S.~Ahmed, A.~Pitchford, D.~Burgarth, and F.~Nori, Phys.\ Rev.\ Research \textbf{5}, 013181 (2023).
+\bibitem{Krylov2023} A.~Montoison and D.~Orban, J.\ Open Source Softw.\ \textbf{8}, 5187 (2023).
 \end{thebibliography}
 
 \end{document}
