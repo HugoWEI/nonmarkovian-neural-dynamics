@@ -1,4 +1,4 @@
-"""Speed comparison figure for the HEOM steady-state benchmark (laptop results).
+"""Speed comparison figure for the HEOM steady-state benchmark (local-machine results).
 
 Left: exact (direct) solves, QuTiP vs deepest-tier elimination.
 Right: iterative GMRES with HierarchicalEOM.jl's default settings, full hierarchy
@@ -76,7 +76,7 @@ style(ax, "Same solver, same accuracy, end to end")
 ax.set_ylim(0.03, 2000); ax.set_xlim(6e4, 6e6)
 ax.legend(frameon=False, loc="upper left")
 
-fig.text(0.01, 0.005, "Anderson impurity, T/Γ = 0.3, laptop (i7-13650HX, 31.7 GB). Right: one thread, medians of 3–5 runs, "
+fig.text(0.01, 0.005, "Anderson impurity, T/Γ = 0.3, local machine (i7-13650HX, 32 GB). Right: one thread, medians of 3–5 runs, "
          "same GMRES tolerances; largest case vs full GMRES, both restarted at 100. Answers agree to ≤ 2×10⁻¹¹.",
          fontsize=7.5, color=MUTED)
 fig.tight_layout(rect=(0, 0.04, 1, 1))

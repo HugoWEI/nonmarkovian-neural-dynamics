@@ -42,7 +42,7 @@ $T/\Gamma = 0.3$, the reconstructed stationary solutions agree with QuTiP's
 direct solver to within $3\times10^{-13}$ in the maximum norm, while reducing
 the solve time by up to a factor of about 160 on a two-core virtual machine. Applied matrix-free with the same Krylov solver and tolerances, and timed end to
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
-factors of 5.1 to 14.2 at equal accuracy on a single laptop thread (medians of
+factors of 5.1 to 14.2 at equal accuracy on a single thread of a local machine (medians of
 repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns.
 \end{abstract}
 
@@ -257,27 +257,30 @@ orthogonalisation in GMRES.
 
 \section{Benchmarks}\label{sec:bench}
 
-All stationary states in this section are computed for $T/\Gamma = 0.3$ and
-$\mu = 0.05$\,meV. Reported computation times exclude the construction of the HEOM generator and,
-for the Julia implementation, just-in-time compilation. The
-QuTiP comparison reports medians of three repeated runs on the cloud virtual
-machine and single wall-clock measurements on the laptop.
-The HierarchicalEOM.jl comparison uses end-to-end timings, which include the
-extraction of the blocks $A$, $B$, $C$, $D$, the inversion of $D$, the solve and
-the reconstruction of the deepest tier, and reports the median of three to five
-repeated runs with garbage collection before each.
+All stationary states in this section are computed at $T/\Gamma = 0.3$ and
+$\mu = 0.05$\,meV. Benchmarks were performed in two computational environments:
+a local machine and a cloud virtual machine.
 
-Laptop runs used an Intel Core i7-13650HX (14 physical cores, 20 logical
-threads) with 32\,GB of RAM (31.7\,GB usable) under 64-bit Windows~11 Home
-(build 26200), with Julia 1.13.4, HierarchicalEOM.jl 2.17.0, QuantumToolbox.jl
-0.52.0, Krylov.jl 0.10.12 and HEOMTierElimination.jl 0.1.0, and QuTiP 5.3.1.
-The laptop Python environment was Python 3.14.3, NumPy 2.5.1 and SciPy 1.18.0. Both languages use OpenBLAS. A later diagnostic showed default
-settings of 20 BLAS threads in Python and 10 in Julia; the thread settings of
-the earlier, solve-only multithreaded runs were not recorded. The repeated QuTiP
-runs used a 2-core cloud virtual machine (Intel Xeon at 2.1\,GHz, 7\,GB of RAM)
-with Python 3.13.18, NumPy 2.5.3, SciPy 1.18.1, QuTiP 5.3.1 and one OpenBLAS
-thread; the earlier single runs at the largest sizes used a machine of the same
-size.
+The local machine was equipped with an Intel Core i7-13650HX processor
+(14 physical cores, 20 logical threads) and 32\,GB of RAM (31.7\,GB usable),
+running 64-bit Windows~11 Home (build 26200). It ran Julia 1.13.4,
+HierarchicalEOM.jl 2.17.0, QuantumToolbox.jl 0.52.0, Krylov.jl 0.10.12 and
+HEOMTierElimination.jl 0.1.0, and Python 3.14.3 with NumPy 2.5.1, SciPy 1.18.0
+and QuTiP 5.3.1. Both languages use OpenBLAS; a later diagnostic showed default
+settings of 20 BLAS threads in Python and 10 in Julia, while the thread settings
+of the earlier, solve-only multithreaded runs were not recorded. The cloud
+virtual machine had 2 cores (Intel Xeon at 2.1\,GHz) and 7\,GB of RAM, with
+Python 3.13.18, NumPy 2.5.3, SciPy 1.18.1, QuTiP 5.3.1 and one OpenBLAS thread;
+the earlier single runs at the largest sizes used a machine of the same size.
+
+Reported computation times exclude the construction of the HEOM generator and,
+for the Julia implementation, just-in-time compilation. The QuTiP comparison
+reports medians of three repeated runs on the cloud virtual machine and single
+wall-clock measurements on the local machine. The HierarchicalEOM.jl comparison
+uses end-to-end timings, which include the extraction of the blocks $A$, $B$,
+$C$, $D$, the inversion of $D$, the solve and the reconstruction of the deepest
+tier, and reports the median of three to five repeated runs with garbage
+collection before each.
 
 \subsection{Comparison with the QuTiP direct solver}
 
@@ -288,13 +291,13 @@ hierarchies agree to between $10^{-15}$ and $3\times10^{-13}$ in the maximum
 norm over all ADOs. The speed-up grows with the size of the problem, from 5.9
 to 159 in the repeated runs. At $207{,}216$ unknowns the direct solve exhausted
 7\,GB of memory on the virtual machine and had not finished after 25 minutes on
-the laptop, whereas the reduction took 14.1\,s and 36.0\,s respectively.
+the local machine, whereas the reduction took 14.1\,s and 36.0\,s respectively.
 
 \begin{table}[h]
 \centering\small
 \begin{tabular}{rrrrrrr}
 \toprule
-& & & \multicolumn{2}{c}{cloud VM (2 cores, 7\,GB)} & \multicolumn{2}{c}{laptop (32\,GB)}\\
+& & & \multicolumn{2}{c}{cloud VM (2 cores, 7\,GB)} & \multicolumn{2}{c}{local machine (32\,GB)}\\
 \cmidrule(lr){4-5}\cmidrule(lr){6-7}
 $N_k$ & $n$ & unknowns & QuTiP & reduced & QuTiP & reduced\\
 \midrule
@@ -308,7 +311,7 @@ $N_k$ & $n$ & unknowns & QuTiP & reduced & QuTiP & reduced\\
 \caption{Exact stationary solves: QuTiP's direct solver on the full hierarchy
 versus a direct solve of the reduced system~\eqref{eq:schur}. Cloud VM:
 medians of three runs, one BLAS thread (``out of memory'' is from an earlier
-single run); laptop: single runs. Maximum
+single run); local machine: single runs. Maximum
 differences between the two solutions are $\le 3\times10^{-13}$; where only the
 reduced solve completes, the residual $\|\Lc y\|$ is below $10^{-14}$.}
 \label{tab:qutip}
@@ -346,7 +349,7 @@ $N_k$ & $n$ & unknowns & \texttt{steadystate} & full GMRES & reduced & iteration
 7 & 5 & 3{,}885{,}200 $\to$ 663{,}184 & --- & 477.7 s & 97.3 s & 288 $\to$ 255 & 4.9\\
 \bottomrule
 \end{tabular}
-\caption{End-to-end stationary solves on one laptop thread, medians of five
+\caption{End-to-end stationary solves on one thread of the local machine, medians of five
 (first two rows) or three runs. \texttt{steadystate}: HierarchicalEOM.jl's
 default; full GMRES: the same algorithm with Krylov.jl; reduced: the same GMRES on
 the reduced system, applied matrix-free. The speed-up is relative to
@@ -377,7 +380,7 @@ runs), because of the fill-in discussed above.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{speed_comparison.pdf}
-\caption{Stationary-solve time against hierarchy size on a laptop. Left: exact
+\caption{Stationary-solve time against hierarchy size on the local machine. Left: exact
 solves; the QuTiP run at $207{,}216$ unknowns was stopped after 25 minutes.
 Right: HierarchicalEOM.jl's \texttt{steadystate} and the same GMRES on the
 reduced system, end to end, one thread, medians of three to five runs (largest
