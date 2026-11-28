@@ -30,11 +30,8 @@ hierarchical equations of motion}
 The stationary solution of the hierarchical equations of motion (HEOM)
 provides the initial condition for quenches from correlated system--bath
 equilibrium and is the central computational task in steady-state transport
-calculations, yet it requires solving a linear system whose size grows combinatorially with hierarchy depth. Setting the time
-derivative of the deepest tier to zero is an established truncation scheme for
-HEOM dynamics and has been used inside steady-state solvers. We make explicit
-that for the stationary problem this elimination is exact and analyse its
-structure: in a truncated hierarchy the deepest-tier auxiliary density operators
+calculations, yet it requires solving a linear system whose size grows combinatorially with hierarchy depth. We show that
+this system can be reduced exactly. In a truncated hierarchy the deepest-tier auxiliary density operators
 couple only to the preceding tier, so the corresponding submatrix of the generator is block diagonal and,
 for impurity Hamiltonians diagonal in the occupation basis, itself diagonal. At stationarity this tier
 can therefore be removed by a Schur complement, which introduces no additional
