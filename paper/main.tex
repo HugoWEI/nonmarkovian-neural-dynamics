@@ -464,54 +464,52 @@ unit trace, with a minimum eigenvalue of 0.028.
 
 \section{Discussion}\label{sec:discussion}
 
-The reduction is a small change to existing codes: it requires the tier of each
-ADO, a split of the generator into four blocks, and a diagonal (or $d^2\times
-d^2$ block-diagonal) inversion. It combines with, rather than replaces, the
-approaches cited in the introduction. Better bath decompositions lower $K$ and
-leave the deepest tier dominant whenever $K \gg n$. Importance-based pruning and
-preconditioning act on the remaining system. Steady-state transport
-calculations in a two-lead geometry, where the stationary solve is the
-dominant cost, are a natural next application; we have not benchmarked them
-here.
+The reduction can be incorporated into existing HEOM implementations using the
+tier indices of the ADOs and the block structure of the generator. It is
+compatible with other approaches to reducing the computational cost of HEOM,
+including optimised bath decompositions, importance-based pruning and
+preconditioning. Its computational advantage is particularly relevant when the
+number of bath exponents is large relative to the hierarchy depth.
 
 \paragraph{Relation to the solver of Kaspar and Thoss.}
-At stationarity their closure of tier $n$~\cite{KasparThoss2021} and the
-elimination used here produce the same reduced system; the two works differ
-in everything around it. Kaspar and Thoss write the HEOM as coupled matrix
-equations in the system Hilbert space and solve them with conjugate gradients
-on the normal equations, preconditioned by an operator that keeps, for each
-ADO, only the system commutator and the decay terms and drops all couplings
-between tiers; it is applied by backward substitution in a Sylvester equation
-per ADO. Here, by contrast, the reduction acts on the assembled generators of
-QuTiP and HierarchicalEOM.jl, and the linear solver is left unchanged
-(unpreconditioned GMRES or a sparse direct factorisation), so that the measured
-gains isolate the effect of the smaller system. The two approaches are
-therefore complementary: a preconditioner of their type could be applied to
-the reduced system as well. We have not benchmarked against their
-implementation, which to our knowledge is not publicly available; a direct
-comparison, and a combination of both, are left for future work.
+The closure introduced by Kaspar and Thoss~\cite{KasparThoss2021} yields the
+same reduced system at stationarity. The two approaches differ primarily in
+their numerical representation and choice of linear solver. Kaspar and Thoss
+formulate the HEOM as coupled matrix equations in the system Hilbert space and
+solve the corresponding normal equations using preconditioned conjugate
+gradients. In the present work, the reduction is applied directly to the
+generators constructed by QuTiP and HierarchicalEOM.jl, retaining the original
+linear solver to assess the computational effect of the dimensional reduction.
+A direct performance comparison with their implementation was not performed.
+The combination of deepest-tier elimination with the preconditioning strategy
+of Ref.~\cite{KasparThoss2021} warrants further investigation.
 
-The study has clear limits. It covers one model, a single-orbital impurity with
-one lead per spin, and the benchmark against HierarchicalEOM.jl uses that
-package's default solver settings on one machine; a tuned or preconditioned
-solver could change the absolute numbers, and the reduction would apply to it
-as well. The particle--hole symmetric point $\varepsilon - \mu = -U/2$ keeps the
-occupation at exactly $0.5$ at every depth and should not be used to validate
-solvers. Finally, the depth error of the dynamical reference is extrapolated
-from $N_k = 3$; a direct $N_k = 7$, depth-5 propagation was not performed.
+The numerical benchmarks are restricted to a single-orbital Anderson impurity
+model and the solver configurations described in Sec.~\ref{sec:bench}. The
+performance of the reduction with alternative preconditioners and in more
+general system--bath configurations remains to be investigated. For the quench
+considered in Sec.~\ref{sec:reference}, the estimate of the hierarchy truncation
+error is obtained from the depth-5 calculation at Padé order 3; a depth-5
+propagation at $N_k = 7$ was not performed. Future work will consider the
+application of the reduction to steady-state transport calculations in a
+two-lead geometry.
 
 \section{Conclusion}
 
-In a truncated hierarchy with many bath exponents, as in the low-temperature
-regime studied here, the deepest tier contains most of the ADOs, and its
-generator block is local. At
-stationarity it can be removed exactly; the operation coincides with an
-existing time-derivative truncation~\cite{Hou2015,KasparThoss2021}, which is
-therefore exact for steady states of the truncated hierarchy. Doing so reduces the stationary system
-3.6- to 10.4-fold for the low-temperature Anderson model studied here, accelerates
-both direct and Krylov solves, and provides a numerical reference for benchmarking approximate solvers,
-including neural-network-based methods, in the regime where memory effects are
-strongest.
+We have examined the exact elimination of the deepest tier in the stationary
+hierarchical equations of motion and identified the structural properties of
+the HEOM generator that make this reduction computationally efficient.
+
+For the Anderson impurity model considered here, the reduction decreases the
+dimension of the stationary linear system by factors of 3.6 to 10.4. Numerical
+benchmarks against QuTiP and HierarchicalEOM.jl demonstrate substantial
+reductions in computation time for both direct and iterative solvers without
+introducing additional approximation to the truncated stationary problem.
+
+The method was further applied to the initialisation of a low-temperature
+quench from correlated system--bath equilibrium. The Python and Julia
+implementations provided with this work allow the reduction to be incorporated
+into existing HEOM calculations.
 
 \paragraph{Use of AI tools.}
 Generative AI tools (Anthropic's Claude and OpenAI's ChatGPT) were used to help
