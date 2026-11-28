@@ -30,9 +30,12 @@ hierarchical equations of motion}
 The stationary solution of the hierarchical equations of motion (HEOM)
 provides the initial condition for quenches from correlated system--bath
 equilibrium and is the central computational task in steady-state transport
-calculations, yet it requires solving a linear system whose size grows combinatorially with hierarchy depth. We point out that
-in a truncated hierarchy the deepest-tier auxiliary density operators couple
-only to the preceding tier, so the corresponding submatrix of the generator is block diagonal and,
+calculations, yet it requires solving a linear system whose size grows combinatorially with hierarchy depth. Setting the time
+derivative of the deepest tier to zero is an established truncation scheme for
+HEOM dynamics and has been used inside steady-state solvers. We make explicit
+that for the stationary problem this elimination is exact and analyse its
+structure: in a truncated hierarchy the deepest-tier auxiliary density operators
+couple only to the preceding tier, so the corresponding submatrix of the generator is block diagonal and,
 for impurity Hamiltonians diagonal in the occupation basis, itself diagonal. At stationarity this tier
 can therefore be removed by a Schur complement, which introduces no additional
 approximation to the truncated stationary system. For
@@ -45,7 +48,7 @@ the solve time by up to a factor of about 160 on a two-core virtual machine. App
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
 factors of 5.1 to 14.2 at equal accuracy on a single laptop thread (medians of
 repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns;
-with multithreaded linear algebra the gains are smaller, 2.2 to 4.4. We use the reduction to obtain a low-temperature quench reference with an
+in earlier solve-only runs with multithreaded linear algebra the gains were smaller, 2.2 to 4.4. We use the reduction to obtain a low-temperature quench reference with an
 estimated numerical uncertainty of $10^{-5}$, yielding
 $\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.50362$. Increasing the Padé order
 from three to five changes the transient occupation by up to
@@ -55,9 +58,9 @@ low temperatures.
 
 \section{Introduction}
 
-Open quantum systems whose environment retains a memory of past interactions
-cannot be described by Markovian master equations at low temperature or strong
-coupling. The hierarchical equations of motion (HEOM)~\cite{TanimuraKubo1989,Tanimura2020},
+Conventional Markovian master equations may become inaccurate at low
+temperatures or strong system--bath coupling, where environmental memory
+effects can play a significant role. The hierarchical equations of motion (HEOM)~\cite{TanimuraKubo1989,Tanimura2020},
 and their fermionic generalisation~\cite{Jin2008}, treat this memory exactly for
 Gaussian environments by propagating the reduced density matrix together with a
 hierarchy of auxiliary density operators (ADOs). The main computational limitation
@@ -75,7 +78,12 @@ benchmarked against exact HEOM~\cite{Cao2025,Cao2026}. Closing the hierarchy
 with a terminator, an approximation to the effect of the discarded tiers, dates
 back to the early HEOM literature~\cite{TanimuraWolynes1991,IshizakiTanimura2005};
 a recent analysis shows that Schur-complement-type terminators converge
-spectrally to the full HEOM~\cite{Vadimov2026}.
+spectrally to the full HEOM~\cite{Vadimov2026}. Closest to the present work,
+Hou \emph{et al.} proposed truncating the hierarchy by using the time
+derivatives of the highest-tier ADOs~\cite{Hou2015}, and Kaspar and Thoss used
+this idea in an iterative steady-state solver for fermionic transport, setting
+the time derivative of the $n$th tier to zero and inserting its solution into
+the equations of tier $n-1$~\cite{KasparThoss2021}.
 
 This paper concerns a narrower but frequent task: computing the stationary
 state of a hierarchy that has already been truncated at depth $n$. This state
@@ -86,10 +94,10 @@ off. The benchmarks below use one reservoir per spin rather than a two-lead
 transport geometry; transport is an application we expect, not one we
 demonstrate. We make three contributions.
 \begin{enumerate}
-\item We show that the deepest tier can be eliminated from the stationary
-  problem \emph{exactly}: because its time derivative vanishes, the elimination
-  introduces no additional approximation to the truncated stationary HEOM
-  system, beyond the depth truncation and the Padé expansion already made. For the model studied here the eliminated block is
+\item We state and prove that this elimination of the deepest tier, which
+  as a truncation of the dynamics is an approximation, introduces no
+  additional approximation to the truncated stationary HEOM system, beyond the
+  depth truncation and the Padé expansion already made. For the model studied here the eliminated block is
   exactly diagonal, and the deepest tier contains most of the hierarchy
   (Sec.~\ref{sec:method}).
 \item We benchmark the reduction against QuTiP~\cite{Lambert2023} and against
@@ -101,9 +109,11 @@ demonstrate. We make three contributions.
   budget, intended as a test case for approximate and neural solvers
   (Sec.~\ref{sec:reference}).
 \end{enumerate}
-The elimination itself is elementary linear algebra; the contribution lies in
-identifying the structure that makes it exact and inexpensive, and in
-quantifying its effect on practical solvers.
+The elimination itself is elementary linear algebra and, as an operation,
+not new~\cite{Hou2015,KasparThoss2021}; the contribution lies in the explicit
+statement of its exactness for the stationary problem, the analysis of the
+structure that makes it inexpensive, open implementations for two widely used
+packages, and the quantification of its effect on practical solvers.
 
 \section{Model and hierarchy}\label{sec:model}
 
@@ -115,8 +125,9 @@ H_S = \varepsilon \sum_{\sigma} n_\sigma + U n_\uparrow n_\downarrow ,
 so that $\varepsilon = -U/2$ and the model is particle--hole symmetric at zero
 chemical potential. Each spin is coupled to one fermionic lead with a Lorentzian
 hybridisation of width $\Gamma = 0.1$\,meV and bandwidth $W = 5$\,meV. The system
-Hilbert space has dimension $d = 4$. We use $k_B = 1$, so temperatures are quoted
-as energies ($T/\Gamma$), and times follow from $\hbar = 0.658211928$\,meV\,ps.
+Hilbert space has dimension $d = 4$. We use natural units, $\hbar = k_B = 1$, in all equations, so that energies,
+temperatures and rates are in meV and temperatures are quoted as $T/\Gamma$;
+physical times in ps follow from $\hbar = 0.658211928$\,meV\,ps.
 
 The lead correlation functions are expanded as
 \begin{equation}
@@ -191,16 +202,21 @@ $\rho_{\mathbf{0}}$, which belongs to $x$. \hfill$\square$
 When $H_S$ is diagonal in the occupation basis, as here, $\Lc_S$ is diagonal in
 the corresponding Liouville basis, and $D$ is diagonal with entries
 $-\big(i(E_a - E_b) + \sum_{k\in\mathbf{j}}\gamma_k\big)$. Their real parts are
-strictly negative, so $D$ is invertible; numerically, the tier-4 block for
-$N_k = 7$ has $79{,}360$ nonzero entries, all on the diagonal. For a general
+strictly negative, so $D$ is invertible; numerically, for $N_k = 7$ the
+deepest-tier block has $79{,}360$ nonzero entries at depth 3 and $575{,}360$ at
+depth 4, all on the diagonal. For a general
 system, $D$ remains block diagonal with $d^2\times d^2$ blocks, allowing its
 inverse to be applied independently to each block.
 
 Two remarks delimit the scope. First, the reduction is exact only for the
 stationary problem: during time evolution $\dot u \neq 0$, so the deepest tier
-carries memory and the full hierarchy must be propagated. In the language of
-Ref.~\cite{Vadimov2026}, the stationary reduction is a Schur complement whose
-tail block is known exactly rather than approximated. Second, the reduction
+carries memory and the full hierarchy must be propagated. Algebraically, the reduced
+operator $S$ coincides with the generator of the depth-$(n-1)$ hierarchy closed
+by the time-derivative truncation of Refs.~\cite{Hou2015,KasparThoss2021},
+and with a Schur-complement-type terminator in the sense of
+Ref.~\cite{Vadimov2026} whose tail block is known exactly rather than
+approximated. Used for time evolution, this closure is an approximation; for
+the stationary problem it reproduces the depth-$n$ solution exactly. Second, the reduction
 removes the deepest tier of a hierarchy that has already been truncated; it does
 not change the truncation error of depth $n$.
 
@@ -432,8 +448,9 @@ integrator $\mathrm{rtol}=10^{-10}$ vs $10^{-7}$ ($N_k=7$, depth 3) & $3.5\times
 \label{tab:pade}
 \end{table}
 
-Convergence in depth is geometric, with each additional tier reducing the
-change by one to two orders of magnitude, and low temperature is harder than
+The differences between successive hierarchy depths decrease rapidly in the
+cases studied, by approximately one to two orders of magnitude per additional
+tier, and low temperature is harder than
 high temperature by more than an order of magnitude at every depth. Two
 properties allow the errors to be budgeted separately: the depth error is
 nearly independent of $N_k$ (rows 2--4 of Table~\ref{tab:depth} agree to within
@@ -495,11 +512,19 @@ from $N_k = 3$; a direct $N_k = 7$, depth-5 propagation was not performed.
 In a truncated hierarchy with many bath exponents, as in the low-temperature
 regime studied here, the deepest tier contains most of the ADOs, and its
 generator block is local. At
-stationarity it can be removed exactly. Doing so reduces the stationary system
+stationarity it can be removed exactly; the operation coincides with an
+existing time-derivative truncation~\cite{Hou2015,KasparThoss2021}, which is
+therefore exact for steady states of the truncated hierarchy. Doing so reduces the stationary system
 3.6- to 10.4-fold for the low-temperature Anderson model studied here, accelerates
 both direct and Krylov solves, and provides a numerical reference for benchmarking approximate solvers,
 including neural-network-based methods, in the regime where memory effects are
 strongest.
+
+\paragraph{Use of AI tools.}
+Generative AI tools (Anthropic's Claude and OpenAI's ChatGPT) were used to help
+write and debug code, run and document benchmarks, search the literature and
+edit the manuscript. The author reviewed the code, results and references and
+takes full responsibility for the content of this paper.
 
 \paragraph{Code and data availability.}
 {\sloppy The Python implementation
@@ -508,7 +533,7 @@ against QuTiP, the Julia package HEOMTierElimination.jl
 (\path{julia/HEOMTierElimination/}) with its tests, the convergence scripts, the
 Python and Julia benchmark scripts, the raw results and the plotting script
 (\path{benchmarks/heom_steady_state/}) are available in the repository listed
-above, at the tag \texttt{v0.2.0-paper}. Python dependencies are declared in
+above, at the tag \texttt{v0.2.1-paper}. Python dependencies are declared in
 \path{pyproject.toml} and Julia dependencies in the package
 \path{Project.toml}; no Julia \path{Manifest.toml} was archived, and exact
 package versions are those listed in Sec.~\ref{sec:bench}.\par}
@@ -520,7 +545,7 @@ package versions are those listed in Sec.~\ref{sec:bench}.\par}
 \bibitem{Jin2008} J.~Jin, X.~Zheng, and Y.~Yan, J.\ Chem.\ Phys.\ \textbf{128}, 234703 (2008).
 \bibitem{HuXuYan2010} J.~Hu, R.-X.~Xu, and Y.~Yan, J.\ Chem.\ Phys.\ \textbf{133}, 101106 (2010).
 \bibitem{Xu2022} M.~Xu, Y.~Yan, Q.~Shi, J.~Ankerhold, and J.~T.~Stockburger, Phys.\ Rev.\ Lett.\ \textbf{129}, 230601 (2022).
-\bibitem{Dan2023} X.~Dan \emph{et al.}, Efficient low temperature simulations for fermionic reservoirs with the hierarchical equations of motion method: application to the Anderson impurity model, arXiv:2211.04089.
+\bibitem{Dan2023} X.~Dan, M.~Xu, J.~T.~Stockburger, J.~Ankerhold, and Q.~Shi, Phys.\ Rev.\ B \textbf{107}, 195429 (2023).
 \bibitem{Shi2018} Q.~Shi, Y.~Xu, Y.~Yan, and M.~Xu, J.\ Chem.\ Phys.\ \textbf{148}, 174102 (2018).
 \bibitem{Borrelli2019} R.~Borrelli, J.\ Chem.\ Phys.\ \textbf{150}, 234102 (2019).
 \bibitem{Ke2022} Y.~Ke, R.~Borrelli, and M.~Thoss, Hierarchical equations of motion approach to hybrid fermionic and bosonic environments: matrix product state formulation in twin space, arXiv:2202.10273.
@@ -529,6 +554,8 @@ package versions are those listed in Sec.~\ref{sec:bench}.\par}
 \bibitem{Cao2026} L.~Cao \emph{et al.}, Simulating non-Markovian open quantum dynamics by exploiting physics-informed neural network, arXiv:2603.08081.
 \bibitem{TanimuraWolynes1991} Y.~Tanimura and P.~G.~Wolynes, Phys.\ Rev.\ A \textbf{43}, 4131 (1991).
 \bibitem{IshizakiTanimura2005} A.~Ishizaki and Y.~Tanimura, J.\ Phys.\ Soc.\ Jpn.\ \textbf{74}, 3131 (2005).
+\bibitem{Hou2015} D.~Hou, S.~Wang, R.~Wang, L.~Ye, R.~Xu, X.~Zheng, and Y.~Yan, J.\ Chem.\ Phys.\ \textbf{142}, 104112 (2015).
+\bibitem{KasparThoss2021} C.~Kaspar and M.~Thoss, J.\ Phys.\ Chem.\ A \textbf{125}, 5190 (2021).
 \bibitem{Vadimov2026} V.~Vadimov, On truncations of hierarchical equations of motion for finite-dimensional systems, arXiv:2604.22568.
 \bibitem{Lambert2023} N.~Lambert, T.~Raheja, S.~Cross, P.~Menczel, S.~Ahmed, A.~Pitchford, D.~Burgarth, and F.~Nori, Phys.\ Rev.\ Research \textbf{5}, 013181 (2023).
 \bibitem{Krylov2023} A.~Montoison and D.~Orban, J.\ Open Source Softw.\ \textbf{8}, 5187 (2023).
