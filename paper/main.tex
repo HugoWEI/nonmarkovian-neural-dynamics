@@ -276,11 +276,10 @@ thread.
 Reported computation times exclude the construction of the HEOM generator and,
 for the Julia implementation, just-in-time compilation. The QuTiP comparison
 reports medians of three repeated runs on the cloud virtual machine and single
-wall-clock measurements on the local machine. The HierarchicalEOM.jl comparison
-uses end-to-end timings, which include the extraction of the blocks $A$, $B$,
-$C$, $D$, the inversion of $D$, the solve and the reconstruction of the deepest
-tier, and reports the median of three to five repeated runs with garbage
-collection before each.
+wall-clock measurements on the local machine. The HierarchicalEOM.jl comparison includes the computational cost of the
+reduction, the stationary solve and the reconstruction of the full hierarchy.
+Reported times are medians of three to five measurements, with garbage
+collection performed before each.
 
 \subsection{Comparison with the QuTiP direct solver}
 
