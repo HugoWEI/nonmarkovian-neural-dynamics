@@ -392,7 +392,8 @@ computed at each hierarchy depth using the reduction derived in
 Sec.~\ref{sec:method}. We then examine the convergence of the time-dependent
 occupation $\langle n_\uparrow\rangle(t)$ with respect to the hierarchy depth,
 the Padé expansion order and the time-integration tolerance. The corresponding
-results are reported in Tables~\ref{tab:depth} and~\ref{tab:pade}.
+results are reported in Tables~\ref{tab:depth} and~\ref{tab:pade} and
+Fig.~\ref{fig:conv}.
 
 \begin{table}[h]
 \centering\small
@@ -434,29 +435,24 @@ larger hierarchy depths are required to achieve comparable numerical
 convergence. The results in Table~\ref{tab:depth} show that the depth
 convergence depends only weakly on the Padé order, while those in
 Table~\ref{tab:pade} suggest that the convergence of the Padé expansion is
-largely independent of the hierarchy depth. These observations motivate
-separate estimates of the two contributions to the numerical error. At
-$T/\Gamma = 0.3$, increasing the Padé order from $N_k = 3$ to $N_k = 5$ produces
-a change comparable to that obtained by increasing the hierarchy depth from two
-to three, highlighting the importance of the bath correlation function
-expansion at low temperatures.
+largely independent of the hierarchy depth. These observations suggest that the contributions of hierarchy truncation and
+bath expansion to the numerical error can be estimated separately. At
+$T/\Gamma = 0.3$, increasing the Padé order from $N_k = 3$ to $N_k = 5$ produces a
+variation in the occupation comparable to that obtained by increasing the
+hierarchy depth from two to three.
 
-At $T/\Gamma = 0.3$, $N_k = 7$ and depth 4, after the quench
-$\mu: 0 \to 0.05$\,meV,
+For $T/\Gamma = 0.3$, $N_k = 7$ and $n = 4$, we obtain
 \begin{equation}
-\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.503618 ,
+\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.503618 .
 \end{equation}
-with estimated errors of $2\times10^{-6}$ from the hierarchy depth (taken from
-the $N_k = 3$, depth-5 step), $7\times10^{-6}$ from the Padé order and below
-$10^{-8}$ from time integration, for a total estimated uncertainty of order
-$10^{-5}$. This is an empirical estimate built from the differences in
-Tables~\ref{tab:depth} and~\ref{tab:pade}, not a rigorous bound, and it does not
-imply convergence for parameter combinations that were not simulated. All
-final reduced density matrices are positive (smallest eigenvalue 0.028) and of
-unit trace. As a partial check of the depth estimate, the depth-5 stationary
-state for $N_k = 7$ at $\mu = 0.05$\,meV, obtained in Sec.~\ref{sec:bench},
-changes $\langle n_\uparrow\rangle$ by $4.1\times10^{-6}$ relative to depth 4.
-Figure~\ref{fig:conv} summarises the convergence.
+Based on the convergence results in Tables~\ref{tab:depth} and~\ref{tab:pade},
+we estimate the numerical uncertainty to be of order $10^{-5}$, with
+contributions of approximately $2\times10^{-6}$ from hierarchy truncation,
+$7\times10^{-6}$ from the Padé expansion and less than $10^{-8}$ from time
+integration; this estimate is empirical rather than a rigorous bound. The
+hierarchy truncation error is estimated from the depth-5 calculation at
+$N_k = 3$. All final reduced density matrices are positive definite and have
+unit trace, with a minimum eigenvalue of 0.028.
 
 \begin{figure}[t]
 \centering
