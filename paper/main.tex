@@ -83,7 +83,8 @@ Hou \emph{et al.} proposed truncating the hierarchy by using the time
 derivatives of the highest-tier ADOs~\cite{Hou2015}, and Kaspar and Thoss used
 this idea in an iterative steady-state solver for fermionic transport, setting
 the time derivative of the $n$th tier to zero and inserting its solution into
-the equations of tier $n-1$~\cite{KasparThoss2021}.
+the equations of tier $n-1$~\cite{KasparThoss2021}; we discuss the
+relation to their solver in Sec.~\ref{sec:discussion}.
 
 This paper concerns a narrower but frequent task: computing the stationary
 state of a hierarchy that has already been truncated at depth $n$. This state
@@ -497,6 +498,23 @@ preconditioning act on the remaining system. Steady-state transport
 calculations in a two-lead geometry, where the stationary solve is the
 dominant cost, are a natural next application; we have not benchmarked them
 here.
+
+\paragraph{Relation to the solver of Kaspar and Thoss.}
+At stationarity their closure of tier $n$~\cite{KasparThoss2021} and the
+elimination used here produce the same reduced system; the two works differ
+in everything around it. Kaspar and Thoss write the HEOM as coupled matrix
+equations in the system Hilbert space and solve them with conjugate gradients
+on the normal equations, preconditioned by an operator that keeps, for each
+ADO, only the system commutator and the decay terms and drops all couplings
+between tiers; it is applied by backward substitution in a Sylvester equation
+per ADO. Here, by contrast, the reduction acts on the assembled generators of
+QuTiP and HierarchicalEOM.jl, and the linear solver is left unchanged
+(unpreconditioned GMRES or a sparse direct factorisation), so that the measured
+gains isolate the effect of the smaller system. The two approaches are
+therefore complementary: a preconditioner of their type could be applied to
+the reduced system as well. We have not benchmarked against their
+implementation, which to our knowledge is not publicly available; a direct
+comparison, and a combination of both, are left for future work.
 
 The study has clear limits. It covers one model, a single-orbital impurity with
 one lead per spin, and the benchmark against HierarchicalEOM.jl uses that
