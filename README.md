@@ -48,10 +48,10 @@ ados = steadystate_eliminated(M)    # drop-in for steadystate(M)
 On a spinful Anderson impurity at T/Γ = 0.3 (laptop, 31.7 GB):
 
 - **vs QuTiP's direct solver:** identical to ≤ 3×10⁻¹³ and up to 160 times faster. A case QuTiP had not finished after 25 minutes takes 36 s.
-- **vs HierarchicalEOM.jl's default solver**, using the same GMRES and tolerances on both sides: 2.2 to 16.8 times faster at equal accuracy, and 4.4 times faster at 3.9 million unknowns (99 s → 23 s).
+- **vs HierarchicalEOM.jl's default solver**, same GMRES and tolerances on both sides, timed end to end on one thread (medians of repeated runs): 5.1 to 14.2 times faster at equal accuracy, and 4.9 times faster at 3.9 million unknowns (478 s → 97 s). With multithreaded linear algebra the gains are smaller (2.2 to 4.4).
 - **A converged low-temperature reference** for a correlated quench: ⟨n↑⟩(6 ps) = 0.503618 ± 1×10⁻⁵.
 
-Scope: one model, one machine, the Julia package's default solver settings. Details, proofs and limitations are in the paper: [`paper/main.pdf`](paper/main.pdf).
+Scope: one model, one machine, the Julia package's default solver settings. Bath coefficients were checked one by one against QuTiP (agreement 2.5×10⁻¹⁶). Details, proofs and limitations are in the paper: [`paper/main.pdf`](paper/main.pdf).
 
 ## How it works
 
