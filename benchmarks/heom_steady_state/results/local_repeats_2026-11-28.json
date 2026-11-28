@@ -1,0 +1,92 @@
+{
+ "machine": "local machine, i7-13650HX, 32 GB",
+ "OPENBLAS_NUM_THREADS": "1",
+ "note": "Transcribed from the console output of bench_repeats.py on the local machine, 28 Nov 2026 (Python 3.14.3, NumPy 2.5.1, SciPy 1.18.0, QuTiP 5.3.1 as reported by the author). QuTiP's direct solve for Nk=5, depth=4 had not finished after 25 min in an earlier single run and was not repeated.",
+ "repeats": 3,
+ "cases": [
+  {
+   "Nk": 3,
+   "depth": 3,
+   "unknowns": 11152,
+   "eliminated_all_s": [
+    0.05283080000663176,
+    0.03992519999155775,
+    0.04568700003437698
+   ],
+   "eliminated_median_s": 0.04568700003437698,
+   "n_up_eliminated": 0.5021690148367137,
+   "qutip_all_s": [
+    0.24858339998172596,
+    0.2511688999948092,
+    0.25181280000833794
+   ],
+   "qutip_median_s": 0.2511688999948092,
+   "max_abs_diff": 4.4053549314857716e-14,
+   "speedup_median": 5.4976010638872825
+  },
+  {
+   "Nk": 3,
+   "depth": 4,
+   "unknowns": 40272,
+   "eliminated_all_s": [
+    0.5577525999979116,
+    0.550931399979163,
+    0.5460109999985434
+   ],
+   "eliminated_median_s": 0.550931399979163,
+   "n_up_eliminated": 0.5019625387986366,
+   "qutip_all_s": [
+    6.081416799977887,
+    6.530041599995457,
+    7.151707399985753
+   ],
+   "qutip_median_s": 6.530041599995457,
+   "max_abs_diff": 3.303935494090712e-14,
+   "speedup_median": 11.852730848600084
+  },
+  {
+   "Nk": 7,
+   "depth": 3,
+   "unknowns": 87824,
+   "eliminated_all_s": [
+    0.6189806999755092,
+    0.6476775999763049,
+    0.6130320999654941
+   ],
+   "eliminated_median_s": 0.6189806999755092,
+   "n_up_eliminated": 0.5040950983330221,
+   "qutip_all_s": [
+    70.99730420002015,
+    71.44209140003659,
+    51.71787039999617
+   ],
+   "qutip_median_s": 70.99730420002015,
+   "max_abs_diff": 1.1707830849759712e-13,
+   "speedup_median": 114.7003520510886
+  },
+  {
+   "Nk": 5,
+   "depth": 4,
+   "unknowns": 207216,
+   "eliminated_all_s": [
+    7.156929199991282,
+    7.129033499979414,
+    7.134734500024933
+   ],
+   "eliminated_median_s": 7.134734500024933,
+   "n_up_eliminated": 0.5038535958626366
+  },
+  {
+   "Nk": 7,
+   "depth": 4,
+   "unknowns": 663184,
+   "eliminated_all_s": [
+    84.24430919997394,
+    153.11051839997526,
+    153.7629811000079
+   ],
+   "eliminated_median_s": 153.11051839997526,
+   "n_up_eliminated": 0.5039049808649542
+  }
+ ]
+}
