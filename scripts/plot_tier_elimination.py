@@ -17,7 +17,7 @@ plt.rcParams.update({"font.size": 9, "axes.edgecolor": MUTED, "axes.labelcolor":
 
 z = np.load(SRC / "trajectories.npz")
 summary = json.loads((SRC / "summary.json").read_text())
-fig, ax = plt.subplots(1, 3, figsize=(11.5, 3.4), constrained_layout=True)
+fig, ax = plt.subplots(1, 2, figsize=(7.7, 3.4), constrained_layout=True)
 
 # (a) low-T source-order quench, depths 2-4
 t = z["times"]
@@ -44,21 +44,6 @@ ax[1].text(4.05, 2e-4, "three low-T curves overlap:\ndepth error barely\ndepends
            color=INK, fontsize=8, va="center")
 ax[1].legend(loc="lower left")
 
-# (c) stationary-state cost (measured on the same 2-CPU, 7 GB machine)
-ados = [697, 2517, 5489, 12951, 41449]
-elim = [0.03, 0.40, 0.46, 11.3, 164]
-direct_ados, direct = [697, 2517, 5489], [0.18, 5.8, 75.1]
-ax[2].loglog(ados, elim, color=BLUE, marker="o", ms=7, lw=2, label="exact tier elimination",
-             markeredgecolor="white")
-ax[2].loglog(direct_ados, direct, color=ORANGE, marker="s", ms=7, lw=2, ls="--",
-             label="direct QuTiP solve", markeredgecolor="white")
-ax[2].scatter([12951], [75.1], marker="x", s=70, color=ORANGE, zorder=5)
-ax[2].annotate("direct solve ran out\nof memory (7 GB)", (12951, 75.1),
-               textcoords="offset points", xytext=(-4, -30), ha="center",
-               color=INK, fontsize=8)
-ax[2].set(xlabel="auxiliary density operators", ylabel="steady-state time (s)",
-          title="(c) Correlated steady-state cost")
-ax[2].legend(loc="upper left")
 plt.rcParams["svg.fonttype"] = "none"
 for ext in ("svg", "png"):
     out = ROOT / f"results/figures/tier_elimination_convergence.{ext}"
