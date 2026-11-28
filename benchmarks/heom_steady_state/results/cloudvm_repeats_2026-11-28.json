@@ -1,0 +1,98 @@
+{
+ "machine": "cloud VM, 2 vCPU Intel Xeon @ 2.10GHz, 7 GB",
+ "OPENBLAS_NUM_THREADS": "1",
+ "note": "Run 28 Nov 2026 with bench_repeats.py on the 2-core cloud VM. QuTiP steady_state(use_mkl=False) vs elimination (direct). (5,4) and (7,4): elimination only; QuTiP's direct solve ran out of memory at (5,4) in the earlier single runs.",
+ "python": "3.13.18",
+ "numpy": "2.5.3",
+ "scipy": "1.18.1",
+ "qutip": "5.3.1",
+ "T_over_Gamma": 0.3,
+ "mu_meV": 0.05,
+ "repeats": 3,
+ "cases": [
+  {
+   "Nk": 3,
+   "depth": 3,
+   "unknowns": 11152,
+   "eliminated_all_s": [
+    0.050682173999999414,
+    0.03483499199999951,
+    0.0280157420000009
+   ],
+   "eliminated_median_s": 0.03483499199999951,
+   "n_up_eliminated": 0.5021690148366857,
+   "qutip_all_s": [
+    0.20453711300000066,
+    0.22302889000000015,
+    0.19049618700000082
+   ],
+   "qutip_median_s": 0.20453711300000066,
+   "max_abs_diff": 1.3375617399193479e-14,
+   "speedup_median": 5.8715992528433345
+  },
+  {
+   "Nk": 3,
+   "depth": 4,
+   "unknowns": 40272,
+   "eliminated_all_s": [
+    0.7304495529999997,
+    0.6175443079999994,
+    0.5456439449999984
+   ],
+   "eliminated_median_s": 0.6175443079999994,
+   "n_up_eliminated": 0.5019625387986407,
+   "qutip_all_s": [
+    7.495398671000002,
+    7.485174091000001,
+    8.412926995
+   ],
+   "qutip_median_s": 7.495398671000002,
+   "max_abs_diff": 4.9215307660785314e-14,
+   "speedup_median": 12.137426535878637
+  },
+  {
+   "Nk": 7,
+   "depth": 3,
+   "unknowns": 87824,
+   "eliminated_all_s": [
+    0.5625846770000038,
+    0.5928903390000002,
+    0.7101155249999991
+   ],
+   "eliminated_median_s": 0.5928903390000002,
+   "n_up_eliminated": 0.5040950983330954,
+   "qutip_all_s": [
+    94.07190149,
+    94.39203576700001,
+    91.24439398099997
+   ],
+   "qutip_median_s": 94.07190149,
+   "max_abs_diff": 9.095528002455377e-14,
+   "speedup_median": 158.66661219116267
+  },
+  {
+   "Nk": 5,
+   "depth": 4,
+   "unknowns": 207216,
+   "eliminated_all_s": [
+    14.061211205000006,
+    14.633761598000035,
+    14.016650572999993
+   ],
+   "eliminated_median_s": 14.061211205000006,
+   "n_up_eliminated": 0.5038535958626119
+  },
+  {
+   "Nk": 7,
+   "depth": 4,
+   "unknowns": 663184,
+   "eliminated_all_s": [
+    192.79957497400005,
+    193.11115035400007,
+    207.24082891800003
+   ],
+   "eliminated_median_s": 193.11115035400007,
+   "n_up_eliminated": 0.5039049808651289
+  }
+ ]
+}

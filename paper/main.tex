@@ -31,24 +31,26 @@ The stationary solution of the hierarchical equations of motion (HEOM)
 provides the initial condition for quenches from correlated system--bath
 equilibrium and is the central computational task in steady-state transport
 calculations, yet it requires solving a linear system whose size grows combinatorially with hierarchy depth. We point out that
-in a truncated hierarchy the deepest-tier ADOs couple only to the preceding
-tier, so the corresponding submatrix of the generator is block diagonal and,
+in a truncated hierarchy the deepest-tier auxiliary density operators couple
+only to the preceding tier, so the corresponding submatrix of the generator is block diagonal and,
 for impurity Hamiltonians diagonal in the occupation basis, itself diagonal. At stationarity this tier
-can therefore be removed by a Schur complement without any approximation. For
+can therefore be removed by a Schur complement, which introduces no additional
+approximation to the truncated stationary system. For
 fermionic baths the deepest tier holds between 72\% and 90\% of all auxiliary
 density operators (ADOs) in the cases studied here, so the number of unknowns
 in the stationary linear system is reduced by a factor of 3.6 to 10.4. For a spinful Anderson impurity with Lorentzian leads at
 $T/\Gamma = 0.3$, the reconstructed stationary solutions agree with QuTiP's
 direct solver to within $3\times10^{-13}$ in the maximum norm, while reducing
-the solve time by up to a factor of 160. Applied matrix-free with the same Krylov solver and tolerances, and timed end to
+the solve time by up to a factor of about 160 on a two-core virtual machine. Applied matrix-free with the same Krylov solver and tolerances, and timed end to
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
 factors of 5.1 to 14.2 at equal accuracy on a single laptop thread (medians of
 repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns;
-with multithreaded linear algebra the gains are smaller, 2.2 to 4.4. We use the exact variant to obtain a low-temperature
-quench reference converged in hierarchy depth and Padé order,
-$\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.50362 \pm 1\times10^{-5}$, and
-show that three Padé poles leave an error of $1.6\times10^{-3}$ at this
-temperature.
+with multithreaded linear algebra the gains are smaller, 2.2 to 4.4. We use the reduction to obtain a low-temperature quench reference with an
+estimated numerical uncertainty of $10^{-5}$, yielding
+$\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.50362$. Increasing the Padé order
+from three to five changes the transient occupation by up to
+$1.6\times10^{-3}$, highlighting the importance of bath-expansion accuracy at
+low temperatures.
 \end{abstract}
 
 \section{Introduction}
@@ -58,10 +60,10 @@ cannot be described by Markovian master equations at low temperature or strong
 coupling. The hierarchical equations of motion (HEOM)~\cite{TanimuraKubo1989,Tanimura2020},
 and their fermionic generalisation~\cite{Jin2008}, treat this memory exactly for
 Gaussian environments by propagating the reduced density matrix together with a
-hierarchy of auxiliary density operators (ADOs). The price is size: the number
-of ADOs grows combinatorially with the truncation depth and with the number of
-exponentials used to represent the bath correlation function, and the latter
-grows as temperature decreases.
+hierarchy of auxiliary density operators (ADOs). The main computational limitation
+of HEOM is the combinatorial growth of the hierarchy with both the truncation
+depth and the number of exponential terms required to represent the bath
+correlation function, particularly at low temperatures.
 
 Much recent work aims at reducing this cost. Optimised decompositions of the
 bath correlation function reduce the number of exponentials at low
@@ -85,21 +87,23 @@ transport geometry; transport is an application we expect, not one we
 demonstrate. We make three contributions.
 \begin{enumerate}
 \item We show that the deepest tier can be eliminated from the stationary
-  problem \emph{exactly}: no terminator approximation is involved, because its
-  time derivative vanishes. For the model studied here the eliminated block is
+  problem \emph{exactly}: because its time derivative vanishes, the elimination
+  introduces no additional approximation to the truncated stationary HEOM
+  system, beyond the depth truncation and the Padé expansion already made. For the model studied here the eliminated block is
   exactly diagonal, and the deepest tier contains most of the hierarchy
   (Sec.~\ref{sec:method}).
 \item We benchmark the reduction against QuTiP~\cite{Lambert2023} and against
   HierarchicalEOM.jl~\cite{Huang2023}, using the same Krylov solver and
   tolerances for both sides of the latter comparison, up to
   $3.9\times10^{6}$ unknowns (Sec.~\ref{sec:bench}).
-\item We use the exact variant to produce a converged low-temperature reference
-  for a quench of the Anderson impurity model from correlated equilibrium, with an explicit error
+\item We use the exact variant to produce a low-temperature reference
+  for a quench of the Anderson impurity model from correlated equilibrium, with an empirical error
   budget, intended as a test case for approximate and neural solvers
   (Sec.~\ref{sec:reference}).
 \end{enumerate}
-The elimination itself is elementary linear algebra. Its interest lies in the
-structure that makes it exact and cheap, and in what it buys in practice.
+The elimination itself is elementary linear algebra; the contribution lies in
+identifying the structure that makes it exact and inexpensive, and in
+quantifying its effect on practical solvers.
 
 \section{Model and hierarchy}\label{sec:model}
 
@@ -189,8 +193,8 @@ the corresponding Liouville basis, and $D$ is diagonal with entries
 $-\big(i(E_a - E_b) + \sum_{k\in\mathbf{j}}\gamma_k\big)$. Their real parts are
 strictly negative, so $D$ is invertible; numerically, the tier-4 block for
 $N_k = 7$ has $79{,}360$ nonzero entries, all on the diagonal. For a general
-system $D$ remains block diagonal with $d^2\times d^2$ blocks and is equally cheap
-to invert.
+system, $D$ remains block diagonal with $d^2\times d^2$ blocks, allowing its
+inverse to be applied independently to each block.
 
 Two remarks delimit the scope. First, the reduction is exact only for the
 stationary problem: during time evolution $\dot u \neq 0$, so the deepest tier
@@ -204,9 +208,9 @@ not change the truncation error of depth $n$.
 
 For a fermionic bath with $K$ exponents, tier $k$ contains $\binom{K}{k}$ ADOs,
 and the ratio of consecutive tiers is
-$\binom{K}{n}\big/\binom{K}{n-1} = (K-n+1)/n$. Whenever $K \gg n$, which is the
-regime of low temperature, the deepest tier therefore holds most of the
-hierarchy. Table~\ref{tab:count} lists the counts for the cases used below; the
+$\binom{K}{n}\big/\binom{K}{n-1} = (K-n+1)/n$. When $K \gg n$, as for the
+low-temperature cases studied here, the deepest tier therefore holds most of
+the hierarchy. Table~\ref{tab:count} lists the counts for the cases used below; the
 predicted sizes match those of the generators built by both packages exactly.
 Eliminating the deepest tier shrinks the stationary system by a factor
 $\sum_{k\le n}\binom{K}{k} \big/ \sum_{k<n}\binom{K}{k}$, between 3.6 and 10.4 here.
@@ -260,17 +264,26 @@ All stationary states in this section are computed for $T/\Gamma = 0.3$ and
 $\mu = 0.05$\,meV, away from the particle--hole symmetric point at which the
 occupation is trivially $0.5$. Times exclude the construction of the generator, which all methods share, and
 the Julia runs start with an untimed warm-up, so compilation is excluded. The
-QuTiP comparison below uses single wall-clock measurements.
+QuTiP comparison reports medians of three repeated runs on the cloud virtual
+machine and single wall-clock measurements on the laptop.
 The HierarchicalEOM.jl comparison uses end-to-end timings, which include the
 extraction of the blocks $A$, $B$, $C$, $D$, the inversion of $D$, the solve and
 the reconstruction of the deepest tier, and reports the median of three to five
 repeated runs with garbage collection before each.
 
-Laptop runs used an Intel Core i7-13650HX (20 logical CPUs) with 31.7\,GB of
-RAM under 64-bit Windows, Julia 1.13.4, HierarchicalEOM.jl 2.17.0,
-QuantumToolbox.jl 0.52.0, Krylov.jl 0.10.12 and HEOMTierElimination.jl 0.1.0,
-and Python with QuTiP 5.3.1. The workstation runs used 2 CPU cores and 7\,GB of
-RAM.
+Laptop runs used an Intel Core i7-13650HX (14 physical cores, 20 logical
+threads) with 32\,GB of RAM (31.7\,GB usable) under 64-bit Windows~11 Home
+(build 26200), with Julia 1.13.4, HierarchicalEOM.jl 2.17.0, QuantumToolbox.jl
+0.52.0, Krylov.jl 0.10.12 and HEOMTierElimination.jl 0.1.0, and QuTiP 5.3.1.
+The Python environment on the laptop was later recorded as Python 3.14.3,
+NumPy 2.5.1 and SciPy 1.18.0; the QuTiP laptop runs themselves were not
+version-stamped. Both languages use OpenBLAS. A later diagnostic showed default
+settings of 20 BLAS threads in Python and 10 in Julia; the thread settings of
+the earlier, solve-only multithreaded runs were not recorded. The repeated QuTiP
+runs used a 2-core cloud virtual machine (Intel Xeon at 2.1\,GHz, 7\,GB of RAM)
+with Python 3.13.18, NumPy 2.5.3, SciPy 1.18.1, QuTiP 5.3.1 and one OpenBLAS
+thread; the earlier single runs at the largest sizes used a machine of the same
+size.
 
 \subsection{Comparison with the QuTiP direct solver}
 
@@ -278,28 +291,30 @@ Table~\ref{tab:qutip} compares the reduction, solved with a sparse direct
 factorisation, with the \texttt{steady\_state} method of QuTiP's HEOM solver, a sparse direct
 solve of the full hierarchy. Where both complete, the full stationary
 hierarchies agree to between $10^{-15}$ and $3\times10^{-13}$ in the maximum
-norm over all ADOs. The speed-up grows with the size of the problem. At
-$207{,}216$ unknowns the direct solve exhausted 7\,GB of memory on a workstation
-and had not finished after 25 minutes on a 31.7\,GB laptop, whereas the
-reduction took 11.3\,s and 36.0\,s respectively.
+norm over all ADOs. The speed-up grows with the size of the problem, from 5.9
+to 159 in the repeated runs. At $207{,}216$ unknowns the direct solve exhausted
+7\,GB of memory on the virtual machine and had not finished after 25 minutes on
+the laptop, whereas the reduction took 14.1\,s and 36.0\,s respectively.
 
 \begin{table}[h]
 \centering\small
 \begin{tabular}{rrrrrrr}
 \toprule
-& & & \multicolumn{2}{c}{workstation (2 cores, 7\,GB)} & \multicolumn{2}{c}{laptop (31.7\,GB)}\\
+& & & \multicolumn{2}{c}{cloud VM (2 cores, 7\,GB)} & \multicolumn{2}{c}{laptop (32\,GB)}\\
 \cmidrule(lr){4-5}\cmidrule(lr){6-7}
 $N_k$ & $n$ & unknowns & QuTiP & reduced & QuTiP & reduced\\
 \midrule
-3 & 3 & 11{,}152 & 0.18 s & 0.030 s & 0.77 s & 0.021 s\\
-3 & 4 & 40{,}272 & 5.8 s & 0.40 s & 37.3 s & 2.53 s\\
-7 & 3 & 87{,}824 & 75.1 s & 0.46 s & 181.9 s & 2.26 s\\
-5 & 4 & 207{,}216 & out of memory & 11.3 s & $> 25$ min & 36.0 s\\
-7 & 4 & 663{,}184 & --- & 164 s & --- & ---\\
+3 & 3 & 11{,}152 & 0.20 s & 0.035 s & 0.77 s & 0.021 s\\
+3 & 4 & 40{,}272 & 7.5 s & 0.62 s & 37.3 s & 2.53 s\\
+7 & 3 & 87{,}824 & 94.1 s & 0.59 s & 181.9 s & 2.26 s\\
+5 & 4 & 207{,}216 & out of memory & 14.1 s & $> 25$ min & 36.0 s\\
+7 & 4 & 663{,}184 & --- & 193 s & --- & ---\\
 \bottomrule
 \end{tabular}
 \caption{Exact stationary solves: QuTiP's direct solver on the full hierarchy
-versus a direct solve of the reduced system~\eqref{eq:schur}. Maximum
+versus a direct solve of the reduced system~\eqref{eq:schur}. Cloud VM:
+medians of three runs, one BLAS thread (``out of memory'' is from an earlier
+single run); laptop: single runs. Maximum
 differences between the two solutions are $\le 3\times10^{-13}$; where only the
 reduced solve completes, the residual $\|\Lc y\|$ is below $10^{-14}$.}
 \label{tab:qutip}
@@ -358,8 +373,8 @@ runs with multithreaded linear algebra (Julia started with \texttt{-t auto} and
 default BLAS threads), which timed the GMRES solve only, the factors were 2.2 to
 4.4 at sizes above $2\times10^5$ unknowns. A plausible reason is that the long
 vector operations of the full system benefit more from threading; we have not
-investigated this further. The exact direct variant answers a different
-need. It is faster than the package default up to about $2\times10^5$ unknowns
+investigated this further. The exact direct variant serves a different
+purpose: it yields the solution to near machine precision. It is faster than the package default up to about $2\times10^5$ unknowns
 and agrees with QuTiP to $7\times10^{-14}$ at $663{,}184$ unknowns, against
 $\sim 10^{-11}$ for the GMRES solutions; at that size, however, it is slower
 than the package default (12.1\,s against 9.4\,s in the earlier multithreaded
@@ -376,7 +391,7 @@ case: full GMRES baseline). Labels give the speed-up.}
 \label{fig:speed}
 \end{figure}
 
-\section{A converged low-temperature reference}\label{sec:reference}
+\section{A low-temperature reference}\label{sec:reference}
 
 The exact variant makes it possible to start every hierarchy depth from its own
 correlated stationary state, so that initial state and dynamics are truncated
@@ -437,7 +452,10 @@ $\mu: 0 \to 0.05$\,meV,
 \end{equation}
 with estimated errors of $2\times10^{-6}$ from the hierarchy depth (taken from
 the $N_k = 3$, depth-5 step), $7\times10^{-6}$ from the Padé order and below
-$10^{-8}$ from time integration, for a total uncertainty of order $10^{-5}$. All
+$10^{-8}$ from time integration, for a total estimated uncertainty of order
+$10^{-5}$. This is an empirical estimate built from the differences in
+Tables~\ref{tab:depth} and~\ref{tab:pade}, not a rigorous bound, and it does not
+imply convergence for parameter combinations that were not simulated. All
 final reduced density matrices are positive (smallest eigenvalue 0.028) and of
 unit trace. As a partial check of the depth estimate, the depth-5 stationary
 state for $N_k = 7$ at $\mu = 0.05$\,meV, obtained in Sec.~\ref{sec:bench},
@@ -449,7 +467,7 @@ Figure~\ref{fig:conv} summarises the convergence.
 \includegraphics[width=\linewidth]{tier_elimination_convergence.pdf}
 \caption{(a) Low-temperature quench for increasing depth, $N_k = 7$.
 (b) Maximum change between successive depths. (c) Cost of the correlated
-stationary state, direct solve versus reduction (workstation).}
+stationary state, direct solve versus reduction (cloud VM, single runs).}
 \label{fig:conv}
 \end{figure}
 
@@ -476,20 +494,26 @@ from $N_k = 3$; a direct $N_k = 7$, depth-5 propagation was not performed.
 
 \section{Conclusion}
 
-In a truncated hierarchy, the deepest tier is the largest and the simplest:
-it contains most of the ADOs, and its generator block is local. At
+In a truncated hierarchy with many bath exponents, as in the low-temperature
+regime studied here, the deepest tier contains most of the ADOs, and its
+generator block is local. At
 stationarity it can be removed exactly. Doing so reduces the stationary system
 3.6- to 10.4-fold for the low-temperature Anderson model studied here, accelerates
-both direct and Krylov solves, and enabled a converged reference that will
-serve to grade cheaper solvers, including neural ones, in the regime where
-memory effects are strongest.
+both direct and Krylov solves, and provides a numerical reference for benchmarking approximate solvers,
+including neural-network-based methods, in the regime where memory effects are
+strongest.
 
 \paragraph{Code and data availability.}
-The implementation
-(\path{src/nonmarkovian_neural_dynamics/tier_elimination.py}), its unit tests
-against QuTiP, the convergence scripts, and the Python and Julia benchmarks with
-raw results and plotting scripts (\path{benchmarks/heom_steady_state/}) are
-available in the repository listed above.
+{\sloppy The Python implementation
+(\path{src/nonmarkovian_neural_dynamics/tier_elimination.py}) with its unit tests
+against QuTiP, the Julia package HEOMTierElimination.jl
+(\path{julia/HEOMTierElimination/}) with its tests, the convergence scripts, the
+Python and Julia benchmark scripts, the raw results and the plotting script
+(\path{benchmarks/heom_steady_state/}) are available in the repository listed
+above, at the tag \texttt{v0.2.0-paper}. Python dependencies are declared in
+\path{pyproject.toml} and Julia dependencies in the package
+\path{Project.toml}; no Julia \path{Manifest.toml} was archived, and exact
+package versions are those listed in Sec.~\ref{sec:bench}.\par}
 
 \begin{thebibliography}{99}
 \small
