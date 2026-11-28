@@ -365,9 +365,8 @@ The reduced solve is faster at every size (Table~\ref{tab:julia},
 Fig.~\ref{fig:speed}), by factors of 5 to 14 end to end, and by 4.9 at
 $3.9\times10^6$ unknowns. Iteration counts are also lower on the reduced
 system. Repeated runs vary by up to about 20\% for the full solves and by a few
-per cent for the reduced ones. The exact direct variant serves a different purpose:
-it yields the solution to near machine precision. At $663{,}184$ unknowns its
-occupation $\langle n_\uparrow\rangle$ agrees with that of the independent Python
+per cent for the reduced ones. At $663{,}184$ unknowns, the occupation
+$\langle n_\uparrow\rangle$ obtained with the direct variant agrees with that of the independent Python
 implementation, built on QuTiP's generator, to $7\times10^{-14}$, against
 $\sim 10^{-11}$ for the GMRES solutions.
 
