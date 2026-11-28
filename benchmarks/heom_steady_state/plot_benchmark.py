@@ -54,7 +54,7 @@ for r in done:
 for r in stopped:
     ax.text(r["unknowns"] * 0.95, r["elimination_direct_s"] / 2.6, f"> {1500 / r['elimination_direct_s']:.0f}× faster",
             color=INK, fontsize=9, ha="left", va="top")
-style(ax, "Exact solves: QuTiP vs elimination")
+style(ax, "(a) Comparison with QuTiP")
 ax.set_ylim(0.004, 8000); ax.set_xlim(8000, 5e5)
 ax.legend(frameon=False, loc="upper left")
 
@@ -72,11 +72,11 @@ for c, b in zip(cases, base):
     s_ = b / c["eliminated_end_to_end_s"]
     ax.text(c["unknowns"], c["eliminated_end_to_end_s"] / 2.0, f"{s_:.1f}×",
             color=INK, fontsize=9, ha="center", va="top")
-style(ax, "Same solver, same accuracy, end to end")
+style(ax, "(b) Comparison with HierarchicalEOM.jl")
 ax.set_ylim(0.03, 2000); ax.set_xlim(6e4, 6e6)
 ax.legend(frameon=False, loc="upper left")
 
-fig.text(0.01, 0.005, "Anderson impurity, T/Γ = 0.3, local machine (i7-13650HX, 32 GB). Right: one thread, medians of 3–5 runs, "
+fig.text(0.01, 0.005, "Anderson impurity, T/Γ = 0.3, local machine (i7-13650HX, 32 GB). (b): one thread, medians of 3–5 runs, "
          "same GMRES tolerances; largest case vs full GMRES, both restarted at 100. Answers agree to ≤ 2×10⁻¹¹.",
          fontsize=7.5, color=MUTED)
 fig.tight_layout(rect=(0, 0.04, 1, 1))

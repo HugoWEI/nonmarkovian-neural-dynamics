@@ -374,9 +374,9 @@ size because of the fill-in discussed in Sec.~\ref{sec:method}.
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{speed_comparison.pdf}
-\caption{Stationary-solve time against hierarchy size on the local machine. Left: exact
+\caption{Stationary-solve time against hierarchy size on the local machine. (a) Exact
 solves; the QuTiP run at $207{,}216$ unknowns was stopped after 25 minutes.
-Right: HierarchicalEOM.jl's \texttt{steadystate} and the same GMRES on the
+(b) HierarchicalEOM.jl's \texttt{steadystate} and the same GMRES on the
 reduced system, end to end, one thread, medians of three to five runs (largest
 case: full GMRES baseline). Labels give the speed-up.}
 \label{fig:speed}
