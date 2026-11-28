@@ -203,16 +203,16 @@ and with a Schur-complement-type terminator in the sense of
 Ref.~\cite{Vadimov2026} whose tail block is known exactly rather than
 approximated.
 
-\subsection{Why the deepest tier dominates}
-
-For a fermionic bath with $K$ exponents, tier $k$ contains $\binom{K}{k}$ ADOs,
-and the ratio of consecutive tiers is
-$\binom{K}{n}\big/\binom{K}{n-1} = (K-n+1)/n$. When $K \gg n$, as for the
-low-temperature cases studied here, the deepest tier therefore holds most of
-the hierarchy. Table~\ref{tab:count} lists the counts for the cases used below; the
-predicted sizes match those of the generators built by both packages exactly.
-Eliminating the deepest tier shrinks the stationary system by a factor
-$\sum_{k\le n}\binom{K}{k} \big/ \sum_{k<n}\binom{K}{k}$, between 3.6 and 10.4 here.
+For a fermionic hierarchy with $K$ bath exponents, tier $k$ contains
+$\binom{K}{k}$ ADOs. Eliminating the deepest tier therefore reduces the number
+of unknowns by a factor
+\begin{equation}
+\frac{\sum_{k\le n}\binom{K}{k}}{\sum_{k<n}\binom{K}{k}} .
+\end{equation}
+Since consecutive tiers differ in size by the factor $(K-n+1)/n$, the deepest
+tier holds most of the hierarchy when $K \gg n$, as in the low-temperature cases
+studied here. Table~\ref{tab:count} summarises the hierarchy sizes considered
+in this work, for which the reduction factor ranges from 3.6 to 10.4.
 
 \begin{table}[h]
 \centering\small
