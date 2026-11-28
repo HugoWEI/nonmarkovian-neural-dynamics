@@ -428,17 +428,18 @@ integrator $\mathrm{rtol}=10^{-10}$ vs $10^{-7}$ ($N_k=7$, depth 3) & $3.5\times
 \label{tab:pade}
 \end{table}
 
-The differences between successive hierarchy depths decrease rapidly in the
-cases studied, by approximately one to two orders of magnitude per additional
-tier, and low temperature is harder than
-high temperature by more than an order of magnitude at every depth. Two
-properties allow the errors to be budgeted separately: the depth error is
-nearly independent of $N_k$ (rows 2--4 of Table~\ref{tab:depth} agree to within
-10\% at each step), and the Padé error is nearly independent of depth
-(rows 2--3 of Table~\ref{tab:pade}). Three Padé poles are not sufficient at this
-temperature: the change from $N_k=3$ to $5$ is as large as the depth-2
-truncation error, so low-temperature results obtained with $N_k = 3$ are limited
-by the bath expansion rather than by the hierarchy.
+The differences between successive hierarchy depths decrease by approximately
+one to two orders of magnitude per additional tier. At lower temperatures,
+larger hierarchy depths are required to achieve comparable numerical
+convergence. The results in Table~\ref{tab:depth} show that the depth
+convergence depends only weakly on the Padé order, while those in
+Table~\ref{tab:pade} suggest that the convergence of the Padé expansion is
+largely independent of the hierarchy depth. These observations motivate
+separate estimates of the two contributions to the numerical error. At
+$T/\Gamma = 0.3$, increasing the Padé order from $N_k = 3$ to $N_k = 5$ produces
+a change comparable to that obtained by increasing the hierarchy depth from two
+to three, highlighting the importance of the bath correlation function
+expansion at low temperatures.
 
 At $T/\Gamma = 0.3$, $N_k = 7$ and depth 4, after the quench
 $\mu: 0 \to 0.05$\,meV,
