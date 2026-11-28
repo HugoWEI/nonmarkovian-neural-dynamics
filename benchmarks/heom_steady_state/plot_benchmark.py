@@ -58,25 +58,27 @@ style(ax, "Exact solves: QuTiP vs elimination")
 ax.set_ylim(0.004, 8000); ax.set_xlim(8000, 5e5)
 ax.legend(frameon=False, loc="upper left")
 
-# ---- right: GMRES, same settings ------------------------------------------
+# ---- right: end-to-end, same GMRES, one thread, medians -----------------
 ax = axes[1]
-cases = [c for c in R["gmres_same_settings"]["cases"] if c["unknowns_full"] > 20000]
-x = [c["unknowns_full"] for c in cases]
-ax.plot(x, [c["full_s"] for c in cases], "-o", color=BASE, lw=2, ms=8, mec="white", mew=1.5,
-        label="HierarchicalEOM.jl default (GMRES, full)")
-ax.plot(x, [c["eliminated_mf_s"] for c in cases], "-o", color=OURS, lw=2, ms=8, mec="white",
-        mew=1.5, label="Elimination + same GMRES")
-for c in cases:
-    s = c["full_s"] / c["eliminated_mf_s"]
-    ax.text(c["unknowns_full"], c["eliminated_mf_s"] / 2.0, f"{s:.1f}×",
+F = json.loads((HERE / "results" / "laptop_final_2026-11-28.json").read_text())
+cases = F["cases"]
+x = [c["unknowns"] for c in cases]
+base = [c.get("package_steadystate_s", c["full_gmres_end_to_end_s"]) for c in cases]
+ax.plot(x, base, "-o", color=BASE, lw=2, ms=8, mec="white", mew=1.5,
+        label="HierarchicalEOM.jl steadystate (GMRES, full)")
+ax.plot(x, [c["eliminated_end_to_end_s"] for c in cases], "-o", color=OURS, lw=2, ms=8,
+        mec="white", mew=1.5, label="HEOMTierElimination.jl (same GMRES)")
+for c, b in zip(cases, base):
+    s_ = b / c["eliminated_end_to_end_s"]
+    ax.text(c["unknowns"], c["eliminated_end_to_end_s"] / 2.0, f"{s_:.1f}×",
             color=INK, fontsize=9, ha="center", va="top")
-style(ax, "Same solver, same accuracy: Julia vs elimination")
-ax.set_ylim(0.02, 400); ax.set_xlim(6e4, 6e6)
+style(ax, "Same solver, same accuracy, end to end")
+ax.set_ylim(0.03, 2000); ax.set_xlim(6e4, 6e6)
 ax.legend(frameon=False, loc="upper left")
 
-fig.text(0.01, 0.005, "Spinful Anderson impurity, T/Γ = 0.3, laptop (Windows, 31.7 GB). "
-         "Right: GMRES rtol 1e-12 for both; largest case restarted at 100 for both. "
-         "Answers agree to ≤ 2×10⁻¹².", fontsize=8, color=MUTED)
+fig.text(0.01, 0.005, "Anderson impurity, T/Γ = 0.3, laptop (i7-13650HX, 31.7 GB). Right: one thread, medians of 3–5 runs, "
+         "same GMRES tolerances; largest case vs full GMRES, both restarted at 100. Answers agree to ≤ 2×10⁻¹¹.",
+         fontsize=7.5, color=MUTED)
 fig.tight_layout(rect=(0, 0.04, 1, 1))
 out = HERE / "results"
 for ext in ("svg", "png", "pdf"):
