@@ -83,7 +83,7 @@ equilibrium, and in steady-state transport calculations it is the central
 computational task, from which currents and other observables are then read
 off. The benchmarks below use one reservoir per spin rather than a two-lead
 transport geometry. The application of the method to steady-state transport
-calculations is left for future work. We make three contributions.
+calculations is left for future work. We make two contributions.
 \begin{enumerate}
 \item We state and prove that this elimination of the deepest tier, which
   as a truncation of the dynamics is an approximation, introduces no
@@ -95,11 +95,13 @@ calculations is left for future work. We make three contributions.
   HierarchicalEOM.jl~\cite{Huang2023}, using the same Krylov solver and
   tolerances for both sides of the latter comparison, up to
   $3.9\times10^{6}$ unknowns (Sec.~\ref{sec:bench}).
-\item We use the exact variant to produce a low-temperature reference
-  for a quench of the Anderson impurity model from correlated equilibrium, with an empirical error
-  budget, intended as a test case for approximate and neural solvers
-  (Sec.~\ref{sec:reference}).
 \end{enumerate}
+
+As an application of the method, we also compute a low-temperature quench of
+the Anderson impurity model from correlated equilibrium and examine its
+numerical convergence with respect to hierarchy depth and Padé order
+(Sec.~\ref{sec:reference}).
+
 The elimination itself is elementary linear algebra and, as an operation,
 not new~\cite{Hou2015,KasparThoss2021}; the contribution lies in the explicit
 statement of its exactness for the stationary problem, the analysis of the
