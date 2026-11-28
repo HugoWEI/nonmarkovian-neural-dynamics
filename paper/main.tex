@@ -252,10 +252,8 @@ orthogonalisation of each new vector against the previous ones costs
 $\mathcal{O}(jN)$ at iteration $j$ for vectors of length $N$, and for the
 hierarchies considered here, with $\mathcal{O}(10^2)$ iterations and roughly ten
 nonzeros per row, this term is comparable to or larger than the matrix--vector
-product. Shortening the vectors therefore reduces the cost per iteration
-substantially even though the product itself is not cheaper. We observe in
-addition that GMRES needs fewer iterations on the reduced system
-(Table~\ref{tab:julia}); we have not analysed the origin of this effect.
+product. The reduction in vector length therefore lowers the computational cost of
+orthogonalisation in GMRES.
 
 \section{Benchmarks}\label{sec:bench}
 
