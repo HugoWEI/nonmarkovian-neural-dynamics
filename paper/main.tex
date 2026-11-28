@@ -116,8 +116,13 @@ H_S = \varepsilon \sum_{\sigma} n_\sigma + U n_\uparrow n_\downarrow ,
 \qquad \varepsilon = -0.5~\mathrm{meV},\quad U = 1~\mathrm{meV},
 \end{equation}
 so that $\varepsilon = -U/2$ and the model is particle--hole symmetric at zero
-chemical potential. Each spin is coupled to one fermionic lead with a Lorentzian
-hybridisation of width $\Gamma = 0.1$\,meV and bandwidth $W = 5$\,meV. The system
+chemical potential. Each spin is coupled to one fermionic lead with the Lorentzian
+spectral density
+\begin{equation}
+J(\omega) = \frac{\Gamma W^2}{(\omega - \mu)^2 + W^2},
+\qquad \Gamma = 0.1~\mathrm{meV},\quad W = 5~\mathrm{meV},
+\end{equation}
+centred at the lead chemical potential $\mu$, as in QuTiP~\cite{Lambert2023}. The system
 Hilbert space has dimension $d = 4$. We use natural units, $\hbar = k_B = 1$, in all equations, so that energies,
 temperatures and rates are in meV and temperatures are quoted as $T/\Gamma$;
 physical times in ps follow from $\hbar = 0.658211928$\,meV\,ps.
@@ -387,9 +392,13 @@ GMRES applied directly to the full system.}
 
 As an application of the proposed method, we investigate the dynamics of the
 Anderson impurity model following a sudden change in the lead chemical potential
-from $\mu = 0$ to $0.05$\,meV. The initial correlated equilibrium state is
-computed at each hierarchy depth using the reduction derived in
-Sec.~\ref{sec:method}. We then examine the convergence of the time-dependent
+from $\mu = 0$ to $0.05$\,meV. Since $J(\omega)$ is centred at $\mu$, the change
+shifts each lead rigidly: the bath amplitudes $\eta_k$ are unchanged and the
+decay rates acquire an imaginary shift $\gamma^{\pm}_k \to \gamma^{\pm}_k
+\mp i\mu$. The initial state is the full correlated equilibrium hierarchy at
+$\mu = 0$, computed at each hierarchy depth using the reduction derived in
+Sec.~\ref{sec:method}, and all ADOs are propagated continuously with the
+generator at $\mu = 0.05$\,meV. We then examine the convergence of the time-dependent
 occupation $\langle n_\uparrow\rangle(t)$ with respect to the hierarchy depth,
 the Padé expansion order and the time-integration tolerance. The corresponding
 results are reported in Tables~\ref{tab:depth} and~\ref{tab:pade} and
