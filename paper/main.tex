@@ -368,17 +368,18 @@ per cent for the reduced ones. The exact direct variant serves a different purpo
 it yields the solution to near machine precision. At $663{,}184$ unknowns its
 occupation $\langle n_\uparrow\rangle$ agrees with that of the independent Python
 implementation, built on QuTiP's generator, to $7\times10^{-14}$, against
-$\sim 10^{-11}$ for the GMRES solutions; its cost, however, grows faster with
-size because of the fill-in discussed in Sec.~\ref{sec:method}.
+$\sim 10^{-11}$ for the GMRES solutions.
 
 \begin{figure}[t]
 \centering
 \includegraphics[width=\linewidth]{speed_comparison.pdf}
-\caption{Stationary-solve time against hierarchy size on the local machine. (a) Exact
-solves; the QuTiP run at $207{,}216$ unknowns was stopped after 25 minutes.
-(b) HierarchicalEOM.jl's \texttt{steadystate} and the same GMRES on the
-reduced system, end to end, one thread, medians of three to five runs (largest
-case: full GMRES baseline). Labels give the speed-up.}
+\caption{Computation time for the stationary solution as a function of
+hierarchy size on the local machine. (a) Comparison with the QuTiP direct
+solver; the QuTiP run for the system with $207{,}216$ unknowns was stopped after
+25 minutes. (b) Comparison with HierarchicalEOM.jl using identical GMRES
+settings, with single-threaded execution and median computation times over
+three to five measurements. At the largest hierarchy size, the reference is
+GMRES applied directly to the full system.}
 \label{fig:speed}
 \end{figure}
 
