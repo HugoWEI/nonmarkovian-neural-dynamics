@@ -44,8 +44,8 @@ direct solver to within $3\times10^{-13}$ in the maximum norm, while reducing
 the solve time by up to a factor of about 160 on a two-core virtual machine. Applied matrix-free with the same Krylov solver and tolerances, and timed end to
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
 factors of 5.1 to 14.2 at equal accuracy on a single laptop thread (medians of
-repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns;
-in earlier solve-only runs with multithreaded linear algebra the gains were smaller, 2.2 to 4.4. We use the reduction to obtain a low-temperature quench reference with an
+repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns.
+We use the reduction to obtain a low-temperature quench reference with an
 estimated numerical uncertainty of $10^{-5}$, yielding
 $\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.50362$. Increasing the Padé order
 from three to five changes the transient occupation by up to
