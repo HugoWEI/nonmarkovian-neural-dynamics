@@ -308,9 +308,9 @@ $N_k$ & $n$ & unknowns & QuTiP & reduced & QuTiP & reduced\\
 \bottomrule
 \end{tabular}
 \caption{Exact stationary solves: QuTiP's direct solver on the full hierarchy
-versus a direct solve of the reduced system~\eqref{eq:schur}. Cloud VM:
-medians of three runs, one BLAS thread (``out of memory'' is from an earlier
-single run on a virtual machine of the same specification); local machine: single runs. Maximum
+versus a direct solve of the reduced system~\eqref{eq:schur}. Cloud VM: median of three measurements for completed benchmarks, with one BLAS
+thread; the out-of-memory failure was observed in a single run. Local machine:
+single runs. Maximum
 differences between the two solutions are $\le 3\times10^{-13}$; where only the
 reduced solve completes, the residual $\|\Lc y\|$ is below $10^{-14}$.}
 \label{tab:qutip}
