@@ -39,7 +39,7 @@ fermionic baths the deepest tier holds between 72\% and 90\% of all auxiliary
 density operators (ADOs) in the cases studied here, so the number of unknowns
 in the stationary linear system is reduced by a factor of 3.6 to 10.4. For a spinful Anderson impurity with Lorentzian leads at
 $T/\Gamma = 0.3$, the reconstructed stationary solutions agree with QuTiP's
-direct solver to within $3\times10^{-13}$ in the maximum norm, while reducing
+direct solver to within $2\times10^{-13}$ in the maximum norm, while reducing
 the solve time by up to a factor of about 160 on a two-core virtual machine. Applied matrix-free with the same Krylov solver and tolerances, and timed end to
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
 factors of 5.1 to 14.2 at equal accuracy on a single thread of a local machine (medians of
@@ -266,7 +266,8 @@ The local machine was equipped with an Intel Core i7-13650HX processor
 Windows~11 Home (build 26200). The software environment comprised Julia 1.13.4
 with HierarchicalEOM.jl 2.17.0, QuantumToolbox.jl 0.52.0, Krylov.jl 0.10.12 and
 HEOMTierElimination.jl 0.1.0, and Python 3.14.3 with NumPy 2.5.1, SciPy 1.18.0
-and QuTiP 5.3.1. Both implementations used OpenBLAS.
+and QuTiP 5.3.1. Both implementations used OpenBLAS, restricted to one thread
+for all reported timings.
 
 The cloud virtual machine was equipped with a two-core Intel Xeon processor at
 2.1\,GHz and 7\,GB of RAM. The software environment comprised Python 3.13.18,
@@ -275,8 +276,7 @@ thread.
 
 Reported computation times exclude the construction of the HEOM generator and,
 for the Julia implementation, just-in-time compilation. The QuTiP comparison
-reports medians of three repeated runs on the cloud virtual machine and single
-wall-clock measurements on the local machine. The HierarchicalEOM.jl comparison includes the computational cost of the
+reports medians of three measurements on both machines. The HierarchicalEOM.jl comparison includes the computational cost of the
 reduction, the stationary solve and the reconstruction of the full hierarchy.
 Reported times are medians of three to five measurements, with garbage
 collection performed before each.
@@ -286,11 +286,11 @@ collection performed before each.
 Table~\ref{tab:qutip} compares the reduction, solved with a sparse direct
 factorisation, with the \texttt{steady\_state} method of QuTiP's HEOM solver, a sparse direct
 solve of the full hierarchy. Where both complete, the full stationary
-hierarchies agree to between $10^{-15}$ and $3\times10^{-13}$ in the maximum
-norm over all ADOs. The speed-up grows with the size of the problem, from 5.9
-to 159 in the repeated runs. At $207{,}216$ unknowns the direct solve exhausted
+hierarchies agree to within $1.2\times10^{-13}$ in the maximum norm over all
+ADOs. The speed-up grows with the size of the problem, from 5.5 to 115 on the
+local machine and from 5.9 to 159 on the virtual machine. At $207{,}216$ unknowns the direct solve exhausted
 7\,GB of memory on the virtual machine and had not finished after 25 minutes on
-the local machine, whereas the reduction took 14.1\,s and 36.0\,s respectively.
+the local machine, whereas the reduction took 14.1\,s and 7.1\,s respectively.
 
 \begin{table}[h]
 \centering\small
@@ -300,18 +300,18 @@ the local machine, whereas the reduction took 14.1\,s and 36.0\,s respectively.
 \cmidrule(lr){4-5}\cmidrule(lr){6-7}
 $N_k$ & $n$ & unknowns & QuTiP & reduced & QuTiP & reduced\\
 \midrule
-3 & 3 & 11{,}152 & 0.20 s & 0.035 s & 0.77 s & 0.021 s\\
-3 & 4 & 40{,}272 & 7.5 s & 0.62 s & 37.3 s & 2.53 s\\
-7 & 3 & 87{,}824 & 94.1 s & 0.59 s & 181.9 s & 2.26 s\\
-5 & 4 & 207{,}216 & out of memory & 14.1 s & $> 25$ min & 36.0 s\\
-7 & 4 & 663{,}184 & --- & 193 s & --- & ---\\
+3 & 3 & 11{,}152 & 0.20 s & 0.035 s & 0.25 s & 0.046 s\\
+3 & 4 & 40{,}272 & 7.5 s & 0.62 s & 6.5 s & 0.55 s\\
+7 & 3 & 87{,}824 & 94.1 s & 0.59 s & 71.0 s & 0.62 s\\
+5 & 4 & 207{,}216 & out of memory & 14.1 s & $> 25$ min & 7.1 s\\
+7 & 4 & 663{,}184 & --- & 193 s & --- & 153 s\\
 \bottomrule
 \end{tabular}
 \caption{Exact stationary solves: QuTiP's direct solver on the full hierarchy
-versus a direct solve of the reduced system~\eqref{eq:schur}. Cloud VM: median of three measurements for completed benchmarks, with one BLAS
-thread; the out-of-memory failure was observed in a single run. Local machine:
-single runs. Maximum
-differences between the two solutions are $\le 3\times10^{-13}$; where only the
+versus a direct solve of the reduced system~\eqref{eq:schur}. Median of three measurements for completed benchmarks, with one BLAS thread, on
+both machines; the out-of-memory failure and the run stopped after 25 minutes
+were each observed in a single run. Maximum differences between the two
+solutions are $\le 1.2\times10^{-13}$; where only the
 reduced solve completes, the residual $\|\Lc y\|$ is below $10^{-14}$.}
 \label{tab:qutip}
 \end{table}
@@ -375,7 +375,7 @@ $\sim 10^{-11}$ for the GMRES solutions.
 \includegraphics[width=\linewidth]{speed_comparison.pdf}
 \caption{Computation time for the stationary solution as a function of
 hierarchy size on the local machine. (a) Comparison with the QuTiP direct
-solver; the QuTiP run for the system with $207{,}216$ unknowns was stopped after
+solver, median computation times over three measurements; the QuTiP run for the system with $207{,}216$ unknowns was stopped after
 25 minutes. (b) Comparison with HierarchicalEOM.jl using identical GMRES
 settings, with single-threaded execution and median computation times over
 three to five measurements. At the largest hierarchy size, the reference is
@@ -528,7 +528,7 @@ against QuTiP, the Julia package HEOMTierElimination.jl
 (\path{julia/HEOMTierElimination/}) with its tests, the convergence scripts, the
 Python and Julia benchmark scripts, the raw results and the plotting script
 (\path{benchmarks/heom_steady_state/}) are available in the repository listed
-above, at the tag \texttt{v0.2.1-paper}. Python dependencies are declared in
+above, at the tag \texttt{v0.2.2-paper}. Python dependencies are declared in
 \path{pyproject.toml} and Julia dependencies in the package
 \path{Project.toml}; no Julia \path{Manifest.toml} was archived, and exact
 package versions are those listed in Sec.~\ref{sec:bench}.\par}

@@ -15,7 +15,7 @@ Compares ways of computing the correlated stationary state of the HEOM hierarchy
 | `reference.json` | QuTiP bath exponents and reference ⟨n↑⟩ values |
 
 `results/laptop_2026-11-26.json` holds the numbers from the runs on Hugo's laptop
-(Windows 11, 31.7 GB RAM), transcribed from the console output. `results/laptop_final_2026-11-28.json` holds the single-thread end-to-end Julia medians, and `results/cloudvm_repeats_2026-11-28.json` the repeated QuTiP runs on a 2-core cloud VM (7 GB, one OpenBLAS thread).
+(Windows 11, 31.7 GB RAM), transcribed from the console output. `results/laptop_final_2026-11-28.json` holds the single-thread end-to-end Julia medians, and `results/cloudvm_repeats_2026-11-28.json` the repeated QuTiP runs on a 2-core cloud VM (7 GB, one OpenBLAS thread). `results/local_repeats_2026-11-28.json` holds the same repeated QuTiP runs on the local machine (one OpenBLAS thread); Table 2 and Fig. 1(a) of the paper use these two files.
 
 ## Run (PowerShell)
 
