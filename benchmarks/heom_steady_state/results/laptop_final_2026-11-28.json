@@ -1,0 +1,190 @@
+{
+ "cases": [
+  {
+   "Nk": 7,
+   "depth": 3,
+   "eliminated_all_s": [
+    0.162595,
+    0.1591219,
+    0.1578929,
+    0.1592953,
+    0.1522601
+   ],
+   "eliminated_end_to_end_s": 0.1591219,
+   "full_gmres_all_s": [
+    2.3486204,
+    2.5266087,
+    2.4706079,
+    2.4469786,
+    2.3936978
+   ],
+   "full_gmres_end_to_end_s": 2.4469786,
+   "full_iters": 165,
+   "n_up_eliminated": 0.504095098327289,
+   "n_up_exact_reference": 0.5040950983330954,
+   "n_up_full": 0.504095098325942,
+   "n_up_package": 0.504095098325942,
+   "package_steadystate_all_s": [
+    2.3537891,
+    2.2913375,
+    2.2271376,
+    2.2265864,
+    2.266222
+   ],
+   "package_steadystate_s": 2.266222,
+   "peak_memory_gb": 0.95,
+   "repeats": 5,
+   "restart": 0,
+   "speedup_end_to_end": 15.378012705982016,
+   "unknowns": 87824
+  },
+  {
+   "Nk": 5,
+   "depth": 4,
+   "eliminated_all_s": [
+    0.8413384,
+    0.8071579,
+    0.8237436,
+    0.8414208,
+    0.8394169
+   ],
+   "eliminated_end_to_end_s": 0.8394169,
+   "full_gmres_all_s": [
+    5.7308612,
+    7.7727173,
+    6.0620177,
+    5.6114616,
+    5.3985563
+   ],
+   "full_gmres_end_to_end_s": 5.7308612,
+   "full_iters": 166,
+   "n_up_eliminated": 0.5038535958693134,
+   "n_up_exact_reference": 0.5038535958626119,
+   "n_up_full": 0.5038535958546825,
+   "n_up_package": 0.5038535958546825,
+   "package_steadystate_all_s": [
+    6.0650627,
+    5.5248715,
+    5.4442445,
+    5.9103951,
+    5.6796007
+   ],
+   "package_steadystate_s": 5.6796007,
+   "peak_memory_gb": 1.36,
+   "repeats": 5,
+   "restart": 0,
+   "speedup_end_to_end": 6.827193019344738,
+   "unknowns": 207216
+  },
+  {
+   "Nk": 7,
+   "depth": 4,
+   "eliminated_all_s": [
+    3.617612,
+    3.6677512,
+    3.5628896
+   ],
+   "eliminated_end_to_end_s": 3.617612,
+   "full_gmres_all_s": [
+    21.8707385,
+    27.6070193,
+    21.9356293
+   ],
+   "full_gmres_end_to_end_s": 21.9356293,
+   "full_iters": 177,
+   "n_up_eliminated": 0.5039049808738734,
+   "n_up_exact_reference": 0.5039049808651289,
+   "n_up_full": 0.503904980857123,
+   "n_up_package": 0.503904980857123,
+   "package_steadystate_all_s": [
+    21.9508686,
+    22.1337369,
+    21.6978978
+   ],
+   "package_steadystate_s": 21.9508686,
+   "peak_memory_gb": 2.88,
+   "repeats": 3,
+   "restart": 0,
+   "speedup_end_to_end": 6.063566048542519,
+   "unknowns": 663184
+  },
+  {
+   "Nk": 5,
+   "depth": 5,
+   "eliminated_all_s": [
+    16.9458855,
+    16.7717995,
+    16.9987874
+   ],
+   "eliminated_end_to_end_s": 16.9458855,
+   "full_gmres_all_s": [
+    92.991118,
+    82.7904209,
+    103.9275816
+   ],
+   "full_gmres_end_to_end_s": 92.991118,
+   "full_iters": 184,
+   "n_up_eliminated": 0.5038577072185133,
+   "n_up_full": 0.5038577072167392,
+   "n_up_package": 0.5038577072167392,
+   "package_steadystate_all_s": [
+    66.0052126,
+    107.9633513,
+    87.022582
+   ],
+   "package_steadystate_s": 87.022582,
+   "peak_memory_gb": 3.81,
+   "repeats": 3,
+   "restart": 0,
+   "speedup_end_to_end": 5.487533714304868,
+   "unknowns": 887280
+  },
+  {
+   "Nk": 7,
+   "depth": 5,
+   "eliminated_all_s": [
+    95.87853,
+    97.698063,
+    97.3179708
+   ],
+   "eliminated_end_to_end_s": 97.3179708,
+   "full_gmres_all_s": [
+    405.6748315,
+    478.8420824,
+    477.7263272
+   ],
+   "full_gmres_end_to_end_s": 477.7263272,
+   "full_iters": 288,
+   "n_up_eliminated": 0.503909081462801,
+   "n_up_full": 0.5039090814617226,
+   "peak_memory_gb": 9.07,
+   "repeats": 3,
+   "restart": 100,
+   "speedup_end_to_end": 4.9089219932645785,
+   "unknowns": 3885200
+  }
+ ],
+ "environment": {
+  "T_over_Gamma": 0.3,
+  "bath_check_max_rel_diff": {
+   "3": 2.2170085934097239e-16,
+   "5": 2.4971275630468716e-16,
+   "7": 1.5719966836375344e-16
+  },
+  "blas_threads": 1,
+  "cpu": "13th Gen Intel(R) Core(TM) i7-13650HX",
+  "julia": "1.13.4",
+  "julia_threads": 1,
+  "logical_cpus": 20,
+  "mu_meV": 0.05,
+  "os": "NT x86_64-w64-mingw32",
+  "packages": {
+   "HEOMTierElimination": "0.1.0",
+   "HierarchicalEOM": "2.17.0",
+   "Krylov": "0.10.12",
+   "QuantumToolbox": "0.52.0"
+  },
+  "ram_gb": 31.7,
+  "settings": "GMRES rtol=1.0e-12 atol=1.0e-14; median of repeats; GC before each run; warm-up excluded; generator construction excluded"
+ }
+}
