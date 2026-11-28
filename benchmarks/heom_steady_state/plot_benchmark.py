@@ -76,10 +76,7 @@ style(ax, "(b) Comparison with HierarchicalEOM.jl")
 ax.set_ylim(0.03, 2000); ax.set_xlim(6e4, 6e6)
 ax.legend(frameon=False, loc="upper left")
 
-fig.text(0.01, 0.005, "Anderson impurity, T/Γ = 0.3, local machine (i7-13650HX, 32 GB). (b): one thread, medians of 3–5 runs, "
-         "same GMRES tolerances; largest case vs full GMRES, both restarted at 100. Answers agree to ≤ 2×10⁻¹¹.",
-         fontsize=7.5, color=MUTED)
-fig.tight_layout(rect=(0, 0.04, 1, 1))
+fig.tight_layout()
 out = HERE / "results"
 for ext in ("svg", "png", "pdf"):
     fig.savefig(out / f"speed_comparison.{ext}", dpi=200)
