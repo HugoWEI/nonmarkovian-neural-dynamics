@@ -496,20 +496,23 @@ two-lead geometry.
 
 \section{Conclusion}
 
-We have examined the exact elimination of the deepest tier in the stationary
-hierarchical equations of motion and identified the structural properties of
-the HEOM generator that make this reduction computationally efficient.
+We have shown that the deepest tier of a truncated HEOM hierarchy can be
+eliminated exactly at stationarity through a Schur complement. The
+block-diagonal structure of the corresponding submatrix of the HEOM generator
+enables an efficient implementation of this reduction, particularly for
+fermionic hierarchies with a large number of bath exponents.
 
-For the Anderson impurity model considered here, the reduction decreases the
-dimension of the stationary linear system by factors of 3.6 to 10.4. Numerical
-benchmarks against QuTiP and HierarchicalEOM.jl demonstrate substantial
-reductions in computation time for both direct and iterative solvers without
-introducing additional approximation to the truncated stationary problem.
+We have implemented the reduction using both sparse direct factorisation and
+matrix-free iterative methods within the QuTiP and HierarchicalEOM.jl
+frameworks. For the Anderson impurity model studied here, the dimension of the
+stationary system is reduced by factors of 3.6 to 10.4. Numerical benchmarks
+demonstrate speed-ups of up to 159 for the direct solver and between 4.9 and
+14.2 for GMRES, for systems containing up to 3.9 million unknowns.
 
-The method was further applied to the initialisation of a low-temperature
-quench from correlated system--bath equilibrium. The Python and Julia
-implementations provided with this work allow the reduction to be incorporated
-into existing HEOM calculations.
+The results establish the computational benefit of deepest-tier elimination
+without introducing additional approximation to the stationary HEOM problem.
+The applicability of the method is further illustrated by the initialisation
+of a low-temperature quench from correlated system--bath equilibrium.
 
 \paragraph{Use of AI tools.}
 Generative AI tools (Anthropic's Claude and OpenAI's ChatGPT) were used to help
