@@ -385,12 +385,14 @@ GMRES applied directly to the full system.}
 
 \section{Application to a low-temperature quench}\label{sec:reference}
 
-The exact variant makes it possible to start every hierarchy depth from its own
-correlated stationary state, so that initial state and dynamics are truncated
-consistently. Table~\ref{tab:depth} gives the maximum change of
-$\langle n_\uparrow\rangle(t)$ over the 6\,ps window between successive depths,
-and Table~\ref{tab:pade} the corresponding checks in Padé order and integration
-tolerance.
+As an application of the proposed method, we investigate the dynamics of the
+Anderson impurity model following a sudden change in the lead chemical potential
+from $\mu = 0$ to $0.05$\,meV. The initial correlated equilibrium state is
+computed at each hierarchy depth using the reduction derived in
+Sec.~\ref{sec:method}. We then examine the convergence of the time-dependent
+occupation $\langle n_\uparrow\rangle(t)$ with respect to the hierarchy depth,
+the Padé expansion order and the time-integration tolerance. The corresponding
+results are reported in Tables~\ref{tab:depth} and~\ref{tab:pade}.
 
 \begin{table}[h]
 \centering\small
