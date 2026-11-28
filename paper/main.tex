@@ -45,10 +45,8 @@ the solve time by up to a factor of about 160 on a two-core virtual machine. App
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
 factors of 5.1 to 14.2 at equal accuracy on a single laptop thread (medians of
 repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns.
-We use the reduction to obtain a low-temperature quench reference with an
-estimated numerical uncertainty of $10^{-5}$, yielding
-$\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.50362$. Increasing the Padé order
-from three to five changes the transient occupation by up to
+In a low-temperature quench from correlated equilibrium, increasing the Padé
+order from three to five changes the transient occupation by up to
 $1.6\times10^{-3}$, highlighting the importance of bath-expansion accuracy at
 low temperatures.
 \end{abstract}
