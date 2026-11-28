@@ -45,7 +45,7 @@ the solve time by up to a factor of about 160 on a two-core virtual machine. App
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
 factors of 5.1 to 14.2 at equal accuracy on a single laptop thread (medians of
 repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns;
-with multithreaded linear algebra the gains are smaller, 2.2 to 4.4. We use the reduction to obtain a low-temperature quench reference with an
+in earlier solve-only runs with multithreaded linear algebra the gains were smaller, 2.2 to 4.4. We use the reduction to obtain a low-temperature quench reference with an
 estimated numerical uncertainty of $10^{-5}$, yielding
 $\langle n_\uparrow\rangle(6\,\mathrm{ps}) = 0.50362$. Increasing the Padé order
 from three to five changes the transient occupation by up to
@@ -55,9 +55,9 @@ low temperatures.
 
 \section{Introduction}
 
-Open quantum systems whose environment retains a memory of past interactions
-cannot be described by Markovian master equations at low temperature or strong
-coupling. The hierarchical equations of motion (HEOM)~\cite{TanimuraKubo1989,Tanimura2020},
+Conventional Markovian master equations may become inaccurate at low
+temperatures or strong system--bath coupling, where environmental memory
+effects can play a significant role. The hierarchical equations of motion (HEOM)~\cite{TanimuraKubo1989,Tanimura2020},
 and their fermionic generalisation~\cite{Jin2008}, treat this memory exactly for
 Gaussian environments by propagating the reduced density matrix together with a
 hierarchy of auxiliary density operators (ADOs). The main computational limitation
@@ -116,7 +116,8 @@ so that $\varepsilon = -U/2$ and the model is particle--hole symmetric at zero
 chemical potential. Each spin is coupled to one fermionic lead with a Lorentzian
 hybridisation of width $\Gamma = 0.1$\,meV and bandwidth $W = 5$\,meV. The system
 Hilbert space has dimension $d = 4$. We use $k_B = 1$, so temperatures are quoted
-as energies ($T/\Gamma$), and times follow from $\hbar = 0.658211928$\,meV\,ps.
+as energies ($T/\Gamma$). All equations are written with $\hbar = 1$, so that
+energies and rates are in meV; times in ps follow from $\hbar = 0.658211928$\,meV\,ps.
 
 The lead correlation functions are expanded as
 \begin{equation}
@@ -191,8 +192,9 @@ $\rho_{\mathbf{0}}$, which belongs to $x$. \hfill$\square$
 When $H_S$ is diagonal in the occupation basis, as here, $\Lc_S$ is diagonal in
 the corresponding Liouville basis, and $D$ is diagonal with entries
 $-\big(i(E_a - E_b) + \sum_{k\in\mathbf{j}}\gamma_k\big)$. Their real parts are
-strictly negative, so $D$ is invertible; numerically, the tier-4 block for
-$N_k = 7$ has $79{,}360$ nonzero entries, all on the diagonal. For a general
+strictly negative, so $D$ is invertible; numerically, for $N_k = 7$ the
+deepest-tier block has $79{,}360$ nonzero entries at depth 3 and $575{,}360$ at
+depth 4, all on the diagonal. For a general
 system, $D$ remains block diagonal with $d^2\times d^2$ blocks, allowing its
 inverse to be applied independently to each block.
 
@@ -432,8 +434,9 @@ integrator $\mathrm{rtol}=10^{-10}$ vs $10^{-7}$ ($N_k=7$, depth 3) & $3.5\times
 \label{tab:pade}
 \end{table}
 
-Convergence in depth is geometric, with each additional tier reducing the
-change by one to two orders of magnitude, and low temperature is harder than
+The differences between successive hierarchy depths decrease rapidly in the
+cases studied, by approximately one to two orders of magnitude per additional
+tier, and low temperature is harder than
 high temperature by more than an order of magnitude at every depth. Two
 properties allow the errors to be budgeted separately: the depth error is
 nearly independent of $N_k$ (rows 2--4 of Table~\ref{tab:depth} agree to within
@@ -508,7 +511,7 @@ against QuTiP, the Julia package HEOMTierElimination.jl
 (\path{julia/HEOMTierElimination/}) with its tests, the convergence scripts, the
 Python and Julia benchmark scripts, the raw results and the plotting script
 (\path{benchmarks/heom_steady_state/}) are available in the repository listed
-above, at the tag \texttt{v0.2.0-paper}. Python dependencies are declared in
+above, at the tag \texttt{v0.2.1-paper}. Python dependencies are declared in
 \path{pyproject.toml} and Julia dependencies in the package
 \path{Project.toml}; no Julia \path{Manifest.toml} was archived, and exact
 package versions are those listed in Sec.~\ref{sec:bench}.\par}
