@@ -42,7 +42,8 @@ $T/\Gamma = 0.3$, the reconstructed stationary solutions agree with QuTiP's
 direct solver to within $2\times10^{-13}$ in the maximum norm, while reducing
 the solve time by up to a factor of about 160 on a two-core virtual machine. Applied matrix-free with the same Krylov solver and tolerances, and timed end to
 end, it accelerates the default steady-state solver of HierarchicalEOM.jl by
-factors of 5.1 to 14.2 at equal accuracy on a single thread of a local machine (medians of
+factors of 5.1 to 14.2, with comparable accuracy in the impurity occupation, on a
+single thread of a local machine (medians of
 repeated runs), and an equivalent solver by 4.9 at $3.9\times10^{6}$ unknowns.
 \end{abstract}
 
@@ -195,8 +196,8 @@ strictly negative, so $D$ is invertible. For a general
 system, $D$ remains block diagonal with $d^2\times d^2$ blocks, allowing its
 inverse to be applied independently to each block.
 
-The reduction is exact only for the stationary problem: during time evolution $\dot u \neq 0$, so the deepest tier
-carries memory and the full hierarchy must be propagated. Algebraically, the reduced
+During time evolution, $\dot u$ is generally nonzero, and the stationary
+reduction cannot be applied directly to the dynamical equations. Algebraically, the reduced
 operator $S$ coincides with the generator of the depth-$(n-1)$ hierarchy closed
 by the time-derivative truncation of Refs.~\cite{Hou2015,KasparThoss2021},
 and with a Schur-complement-type terminator in the sense of
@@ -236,8 +237,8 @@ each ADO carries $d^2 = 16$ unknowns.}
 
 \subsection{Solving the reduced system}
 
-The reduced system can be solved in two ways. A sparse direct factorisation of
-$S$ gives the stationary state to machine precision; $S$ is, however, denser than
+The reduced system can be solved in two ways. The first is a sparse direct
+factorisation of $S$, which is, however, denser than
 the corresponding block of $\Lc$, because $BD^{-1}C$ couples tier-$(n-1)$ ADOs
 that share a deepest-tier neighbour. Alternatively, a Krylov method needs only
 products $Sx$, which we evaluate without forming $S$:
@@ -247,7 +248,7 @@ Sx = Ax - B\big(D^{-1}(Cx)\big).
 \end{equation}
 One such product costs about as much as one product with $\Lc$, since $A$, $B$ and
 $C$ are sub-blocks of $\Lc$ and $D^{-1}$ is diagonal. The vectors on which the
-Krylov method operates are, however, 3.6 to 10.4 times shorter. In GMRES the
+Krylov method operates are, however, 3.6 to 10.4 times shorter. In the generalised minimal residual (GMRES) method, the
 orthogonalisation of each new vector against the previous ones costs
 $\mathcal{O}(jN)$ at iteration $j$ for vectors of length $N$, and for the
 hierarchies considered here, with $\mathcal{O}(10^2)$ iterations and roughly ten
@@ -506,7 +507,7 @@ We have implemented the reduction using both sparse direct factorisation and
 matrix-free iterative methods within the QuTiP and HierarchicalEOM.jl
 frameworks. For the Anderson impurity model studied here, the dimension of the
 stationary system is reduced by factors of 3.6 to 10.4. Numerical benchmarks
-demonstrate speed-ups of up to 159 for the direct solver and between 4.9 and
+demonstrate speed-ups of up to 159 for completed direct solver comparisons and between 4.9 and
 14.2 for GMRES, for systems containing up to 3.9 million unknowns.
 
 The results establish the computational benefit of deepest-tier elimination
