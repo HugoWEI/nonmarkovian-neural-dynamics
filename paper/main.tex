@@ -195,16 +195,13 @@ strictly negative, so $D$ is invertible. For a general
 system, $D$ remains block diagonal with $d^2\times d^2$ blocks, allowing its
 inverse to be applied independently to each block.
 
-Two remarks delimit the scope. First, the reduction is exact only for the
-stationary problem: during time evolution $\dot u \neq 0$, so the deepest tier
+The reduction is exact only for the stationary problem: during time evolution $\dot u \neq 0$, so the deepest tier
 carries memory and the full hierarchy must be propagated. Algebraically, the reduced
 operator $S$ coincides with the generator of the depth-$(n-1)$ hierarchy closed
 by the time-derivative truncation of Refs.~\cite{Hou2015,KasparThoss2021},
 and with a Schur-complement-type terminator in the sense of
 Ref.~\cite{Vadimov2026} whose tail block is known exactly rather than
-approximated. Second, the reduction
-removes the deepest tier of a hierarchy that has already been truncated; it does
-not change the truncation error of depth $n$.
+approximated.
 
 \subsection{Why the deepest tier dominates}
 
