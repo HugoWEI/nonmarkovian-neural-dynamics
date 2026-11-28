@@ -12,7 +12,6 @@
 
 \newcommand{\Lc}{\mathcal{L}}
 \newcommand{\tr}{\operatorname{Tr}}
-\newtheorem{proposition}{Proposition}
 
 \title{\bfseries Exact deepest-tier elimination for stationary\\
 hierarchical equations of motion}
@@ -178,19 +177,18 @@ the same tier are not coupled to each other. Hence $D$ contains only the local
 term $-(i\Lc_S + \sum_{k\in\mathbf{j}}\gamma_k)$ of each tier-$n$ ADO, and is
 block diagonal with $d^2\times d^2$ blocks.
 
-\begin{proposition}
-If every diagonal block of $D$ is invertible, the solutions of
-Eq.~\eqref{eq:stationary} are exactly the vectors
-$y = (x, -D^{-1}Cx)$ with
+At stationarity, the second block row of Eq.~\eqref{eq:stationary} gives
+$Cx + Du = 0$. Provided that $D$ is invertible, which holds whenever each of its
+diagonal blocks is, we obtain $u = -D^{-1}Cx$. Substitution into the first block
+row yields the reduced stationary system
 \begin{equation}
 S x \equiv \left(A - B D^{-1} C\right) x = 0, \qquad \tr \rho_{\mathbf{0}} = 1 .
 \label{eq:schur}
 \end{equation}
-\end{proposition}
-\noindent\emph{Proof.} The second block row of $\Lc y = 0$ reads $Cx + Du = 0$,
-hence $u = -D^{-1}Cx$; substituting into the first row gives $Sx = 0$. The
-converse follows by reversing the steps. The trace condition involves only
-$\rho_{\mathbf{0}}$, which belongs to $x$. \hfill$\square$
+The trace condition is unchanged, since $\rho_{\mathbf{0}}$ belongs to the
+retained part of the hierarchy. Conversely, every solution of
+Eq.~\eqref{eq:schur} gives a stationary solution $y = (x, -D^{-1}Cx)$ of the
+full truncated hierarchy, which is therefore recovered exactly.
 
 When $H_S$ is diagonal in the occupation basis, as here, $\Lc_S$ is diagonal in
 the corresponding Liouville basis, and $D$ is diagonal with entries
